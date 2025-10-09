@@ -1,0 +1,713 @@
+{
+  "name": "AI Customer Service Representative - Stripped Version",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').first().json.message.text }}",
+        "options": {
+          "systemMessage": "=You are the Orchestrator Agent for an AI Customer Service system. Your persona is of a customer service representative of an online store.\n\nCurrent time: {{ $now.setZone('UTC+1') }}\n\nOVERVIEW\n- First: be conversational for greetings and simple chit-chat.\n- For everything else: classify, route, and manage the flow between two subagents: FAQ_Agent and Escalation_Agent.\n- When invoking a subagent tool, always pass exactly one structured JSON payload (no extra prose around that payload).\n- When speaking to the end user (greetings, clarification requests, confirmation dialogs), respond in natural, varied language. Stay warm, non-confrontation, don't be uptight or caution the user when they use potentially offensive language.\n\nAVAILABLE SUBAGENTS\n- FAQ_Agent → Answers FAQs using a Supabase RAG knowledge base. May escalate if not confident.\n- Escalation_Agent → Handles ticket creation for human support. Requires user-confirmed name, email, and complaint summary.\n\nPROCESS FLOW\n1. GREETINGS\n   - If the user greets you (“hi”, “hello”, etc.), reply warmly and briefly mention what you can do:\n     “Hi there 👋 I can help answer questions about our store or raise an issue to our support team if needed.”\n\n2. CLASSIFICATION\n   - For each user message, classify and route it to either:\n     - `faq` (for general inquiries, store policies, etc.)\n     - `escalation` (for complaints or unresolved issues)\n\n   Example routing JSON:\n   {\n     \"topic\": \"escalation\",\n     \"urgency\": \"medium\",\n     \"sla_tier\": \"standard\",\n     \"customer_type\": \"standard\",\n     \"tags\": [\"missing item\", \"complaint\"],\n     \"route_to\": \"Escalation_Agent\",\n     \"context\": {\n       \"customer_query\": \"I didn’t receive my package.\",\n       \"classification_reason\": \"Customer expressing dissatisfaction.\"\n     }\n   }\nESCALATION PREPARATION\n\nBefore routing to the Escalation_Agent:\n\nAsk the user for their full name and email address.\n\nConfirm that the email address is correct.\n\nSummarize their issue (1–2 lines).\n\nAsk for confirmation before sending.\n\nExample dialogue:\n\n“Alright, I’ll need your full name and email address to create a ticket.”\n\n“Here’s what I have: ‘Package not delivered after 2 weeks.’ Should I go ahead and send this to our human support team?”\n\nOnce confirmed, add:\n\"context\": {\n  \"summary\": \"<confirmed issue summary>\",\n  \"user_confirmed\": true,\n  \"name\": \"<full name>\",\n  \"email\": \"<email address>\"\n}\nERROR HANDLING\n\nIf the Escalation_Agent reports a missing name or email, ask the user again naturally.\n\nIf ticket creation fails, say something like:\n“Something went wrong while creating your support ticket. Could you please try again later?”\n\nSTYLE\n\nBe conversational and natural, not robotic.\n\nNever mention internal technical systems (like Supabase or Zendesk).\n\nUse empathy and acknowledge emotions lightly.\n\n\nADDITIONAL RULES\n- Keep tone natural and human.\n- Use structured JSON strictly for subagent calls.\n- Never reveal internal system details, API URLs, or stack traces.\n- Ask for clarification when context is missing instead of assuming.\n- Speak confidently like a store representative. Don't mention the FAQ in your responses. Don't mention internal technical terms like the tool used or that you searched\n\n\nSUMMARY\n- Handle greetings conversationally while mentioning your helpful capabilities.\n- For all other messages: classify → build JSON → route to the right subagent.\n- Gracefully interpret responses, request missing info, and confirm before escalation.\n",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -352,
+        624
+      ],
+      "id": "bc6c6e7b-411e-4f99-a6a5-78570cdc1807",
+      "name": "Orchestrator Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -248,
+        1056
+      ],
+      "id": "32078f2f-e8fb-41ce-857a-33a3271c83ce",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "B5KEBW85AhVb5t24",
+          "name": "Uche Google Gemini(PaLM)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').first().json.message.chat.id.toString() }}",
+        "sessionTTL": 604800
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        -120,
+        1056
+      ],
+      "id": "80280502-67e5-4fff-9c97-372eff5a8eae",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "wJdL5sNqhaaFiyoc",
+          "name": "Uche Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Handles common FAQ-style questions. Receives user query from orchestrator, matches to knowledge base, and returns JSON with answer or escalates if not matched.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=You are the FAQ Resolution Agent, connected to a Supabase-powered knowledge base.\n\nYour role:\n- Use retrieval-augmented generation (RAG) to resolve customer FAQs.\n- Always query the Supabase knowledge base to find the most relevant entries.\n- Answer ONLY using the retrieved knowledge base entries. Do not invent policies or answers.\n- Provide short, clear, and policy-compliant responses.\n- If no relevant FAQ is retrieved with high confidence, escalate to a human.\n\nProcess:\n1. Receive the customer query.\n2. Retrieve the most relevant FAQ entries from Supabase.\n3. Select the best-matching entry, if confidence is high.\n4. Return the response in structured JSON.\n\nOutput format:\n{\n  \"topic\": \"faq\",\n  \"resolved\": true,\n  \"answer\": \"<short FAQ answer based only on retrieved KB>\",\n  \"confidence\": \"<high | medium | low>\",\n  \"action\": \"respond_to_customer\",\n  \"context\": {\n    \"customer_query\": \"<verbatim input>\",\n    \"matched_faq\": \"<retrieved FAQ entry or doc ID from Supabase>\"\n  }\n}\n\nEscalation rule:\nIf no relevant FAQ entry is found or confidence is low:\n{\n  \"topic\": \"faq\",\n  \"resolved\": false,\n  \"action\": \"escalate_to_human\",\n  \"context\": {\n    \"reason\": \"no matching FAQ\",\n    \"customer_query\": \"<verbatim input>\"\n  }\n}\n\nImportant rules:\n- Always ground your answer in the retrieved knowledge base entries from Supabase.\n- Never fabricate company policy or unsupported answers.\n- If multiple entries are retrieved, select the best one and cite it in `matched_faq`.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        -184,
+        848
+      ],
+      "id": "522ff2e6-067a-49ca-92fa-ff85fe324ca6",
+      "name": "FAQ Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Manages all escalations to human agents. Ensures smooth handoff with full context (history, metadata, urgency, tags).",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=You are the Escalation_Agent for an AI Customer Support system.\n\nYour job is to handle confirmed human escalations and create support tickets in Zendesk.\n\n---\n\n### RESPONSIBILITIES\n\n1. Receive escalation payloads from the Orchestrator Agent.\n   Example input:\n   {\n     \"topic\": \"escalation\",\n     \"urgency\": \"high\",\n     \"sla_tier\": \"standard\",\n     \"customer_type\": \"standard\",\n     \"tags\": [\"complaint\", \"refund\"],\n     \"route_to\": \"Escalation_Agent\",\n     \"context\": {\n       \"customer_query\": \"My order never arrived.\",\n       \"summary\": \"Package undelivered for two weeks.\",\n       \"name\": \"Uche Madu\",\n       \"email\": \"uche@example.com\",\n       \"user_confirmed\": true\n     }\n   }\nValidate required fields:\n\nEnsure context.name and context.email are present.\n\nIf either is missing, respond with:\n“I’ll need your full name and email address to create your support ticket.”\n\nConstruct a Zendesk ticket payload:\n\n{\n  \"ticket\": {\n    \"subject\": \"Escalation: {{context.summary}}\",\n    \"comment\": { \"body\": \"Customer issue: {{context.customer_query}}\" },\n    \"requester\": {\n      \"name\": \"{{context.name}}\",\n      \"email\": \"{{context.email}}\"\n    },\n    \"metadata\": {\n      \"urgency\": \"{{urgency}}\",\n      \"sla_tier\": \"{{sla_tier}}\",\n      \"customer_type\": \"{{customer_type}}\",\n      \"tags\": \"{{tags}}\"\n    },\n    \"channel\": \"Telegram Bot\",\n    \"status\": \"open\"\n  }\n}\nCreate the ticket via the Zendesk API.\n\nIf successful:\n“✅ Your ticket has been created successfully! Our support team will reach out soon.”\n“Reference: #{{ticket_id}}”\n\nIf it fails:\n“Something went wrong while creating your ticket. Please try again later.”\n\nTicket status lookup\n\nIf the user asks for a ticket status (e.g., “Check ticket #12345”):\n\nExtract the ticket ID.\n\nCall the Zendesk check_ticket_status tool.\n\nRespond clearly:\n“Your ticket #12345 is currently open and waiting for a response.”\n\nSTYLE\nBe concise and polite.\n\nNever create a ticket without user_confirmed = true.\n\nDo not ask for Shopify or order IDs.\n\nConfirm missing info conversationally (not formally).\n\nGOAL\nSmooth, human-like escalation workflow that confirms user details and sends a structured Zendesk ticket."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        112,
+        848
+      ],
+      "id": "29e40e1e-1e74-4c9f-99ba-a1c4fa9481f8",
+      "name": "Escalation Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Hybrid Search Vector store",
+        "method": "POST",
+        "url": "https://pideimppiouoawqifopz.supabase.co/functions/v1/csr_faq_knowledgebase_hybrid_search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        68,
+        1056
+      ],
+      "id": "964ffdd0-f8f1-4eb0-bf08-31a42c0154cb",
+      "name": "FAQ Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Fwxi3nahYkND0xFA",
+          "name": "Uche Madu - Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -576,
+        624
+      ],
+      "id": "48d7d1d6-e97f-40db-aa56-393cf7b4fb37",
+      "name": "Telegram Trigger",
+      "webhookId": "d0e0f3bd-3db9-4459-be21-67d6e4f39ca7",
+      "credentials": {
+        "telegramApi": {
+          "id": "z7xqIbWEsIroCNwm",
+          "name": "Uche AI_CSA Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Creates a ticket in Zendesk using the customer's email, first_name, last_name retrieved from the Get Shopify Customer ID, as well as the subject of the customer's issue and full description of the issue.",
+        "method": "POST",
+        "url": "https://gadahuhelp.zendesk.com/api/v2/tickets.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "zendeskApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"ticket\": {\n    \"subject\": \"{{ $fromAI('subject', 'the subject of the customer issue', 'string') }}\",\n    \"comment\": {\n      \"body\": \"{{ $fromAI('issue', 'full description of customer issue as a single line of text (no line breaks)', 'string') }}\"\n    },\n    \"requester\": {\n      \"name\": \"{{ $fromAI('name', 'first name and last name of the customer', 'string') }}\",\n      \"email\": \"{{ $fromAI('email', 'email of the customer', 'string') }}\"\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        204,
+        1056
+      ],
+      "id": "757f41dd-5abb-4883-8853-624e7ec57521",
+      "name": "Create Zendesk Ticket",
+      "credentials": {
+        "zendeskApi": {
+          "id": "K6lkt2r5FgD9MneP",
+          "name": "Uche Gadahu Zendesk API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Ticket_ID', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.zendeskTool",
+      "typeVersion": 1,
+      "position": [
+        368,
+        1056
+      ],
+      "id": "4315bea6-8b7f-41a8-8558-d8b4caee6471",
+      "name": "Check Ticket Status",
+      "credentials": {
+        "zendeskApi": {
+          "id": "K6lkt2r5FgD9MneP",
+          "name": "Uche Gadahu Zendesk API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        540,
+        624
+      ],
+      "id": "c9f550ed-de7e-4953-bdb4-ecf942a07925",
+      "name": "Send a text message",
+      "webhookId": "169f55fd-e546-44d0-ad1c-e0fd5da7c4ab",
+      "credentials": {
+        "telegramApi": {
+          "id": "z7xqIbWEsIroCNwm",
+          "name": "Uche AI_CSA Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Set Metadata').item.json.file_id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf",
+              "drawingsToFormat": "application/pdf",
+              "slidesToFormat": "application/pdf",
+              "sheetsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "id": "88b0de97-f822-47ff-bd1b-e6ca4e03e47c",
+      "name": "Download File From Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        1808,
+        752
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "csr_faq_knowledgebase",
+          "mode": "list",
+          "cachedResultName": "csr_faq_knowledgebase"
+        },
+        "options": {
+          "queryName": "hybrid_search"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        2064,
+        752
+      ],
+      "id": "31985828-d2b9-441f-8b05-6cf4cca7694e",
+      "name": "Create Vector Embeddings",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Fwxi3nahYkND0xFA",
+          "name": "Uche Madu - Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "csr_faq_knowledgebase",
+        "filterType": "string",
+        "filterString": "={{ 'metadata->>fileId=eq.' + $json.file_id }}"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        752
+      ],
+      "id": "f1114422-7775-4304-b102-0854d9d34c8e",
+      "name": "Delete Old Documents",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Fwxi3nahYkND0xFA",
+          "name": "Uche Madu - Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        752
+      ],
+      "id": "58b2e8c1-e57d-45e7-bdfe-153f07b04197",
+      "name": "Limit to One File (Avoid Repetition)"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-csr-knowledgebase-new-drive-file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        912,
+        752
+      ],
+      "id": "f5db2235-fd0a-4d55-b17b-1edd7a91a43a",
+      "name": "Webhook",
+      "webhookId": "6c014cc2-5d36-419f-99ca-a6237063a40d"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2bf1f6e4-1181-4d09-917c-6078aadc7d79",
+              "name": "file_id",
+              "value": "={{ $json.body.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        752
+      ],
+      "id": "9d36e9c8-740c-4102-930d-f38a5c1f8147",
+      "name": "Set Metadata"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2032,
+        976
+      ],
+      "id": "e4a5bfa6-9cf8-4853-bec6-8541dde9e1b4",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "C2RuixOGykv5BnMF",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "fileId",
+                "value": "={{ $('Set Metadata').item.json.file_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        976
+      ],
+      "id": "0e598ede-2540-46f3-9318-3c7e8f6ccea0",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "chunkSize": 200,
+        "chunkOverlap": 30
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [
+        2240,
+        1184
+      ],
+      "id": "c078110b-4e55-4641-bea0-8b4b3e470153",
+      "name": "Token Splitter"
+    },
+    {
+      "parameters": {
+        "content": "## RAG Ingestion Phase with Hybrid Search and Metadata Filtering\n* Apps Script monitors folders and subfolders for file uploads and triggers the webhook",
+        "height": 720,
+        "width": 1664
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        832,
+        608
+      ],
+      "typeVersion": 1,
+      "id": "4fdfaf3e-96df-46d6-ad89-3d32de6f310f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Customer Service Representative Agent Team\n* Orchestrator Agent is the customer-facing agent that routes to other subagents or handles general conversations\n* FAQ Agent uses hybrid search-powered RAG via Supabase\n* Escalation Agent create tickets for customers in Zendesk",
+        "height": 864,
+        "width": 1408
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -672,
+        464
+      ],
+      "typeVersion": 1,
+      "id": "353894eb-8ae3-4d33-ba23-60f2236ad494",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "divverse-community.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (compatible; Google-Apps-Script; beanserver; +https://script.google.com; id: UAEmdDd-b8hTDOu4TrsM0bk247508OIoxWA)",
+            "content-length": "271",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "107.178.192.33",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9887b6a4146fe62f-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "107.178.192.33, 172.71.190.138",
+            "x-forwarded-host": "divverse-community.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-45-5cf4858c8f-tn64s",
+            "x-is-trusted": "yes",
+            "x-real-ip": "107.178.192.33"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "1nyF8wVCEgcurAEKKeZNyzYYAkBTGDHON",
+            "name": "AI Customer Service Representative Automation Sample FAQ  — Comprehensive Policies & Support Guide.pdf",
+            "path": "/AI Customer Service Rep n8n Automation",
+            "mimeType": "application/pdf",
+            "updated": "2025-09-30T14:40:06.000Z"
+          },
+          "webhookUrl": "https://divverse-community.app.n8n.cloud/webhook/ai-csr-knowledgebase-new-drive-file",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "FAQ Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Escalation Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "FAQ Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Escalation Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "FAQ Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Zendesk Ticket": {
+      "ai_tool": [
+        [
+          {
+            "node": "Escalation Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Ticket Status": {
+      "ai_tool": [
+        [
+          {
+            "node": "Escalation Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrator Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File From Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old Documents": {
+      "main": [
+        [
+          {
+            "node": "Limit to One File (Avoid Repetition)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit to One File (Avoid Repetition)": {
+      "main": [
+        [
+          {
+            "node": "Download File From Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Metadata": {
+      "main": [
+        [
+          {
+            "node": "Delete Old Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1,
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "bcd7362d-5c44-4787-8183-30c93047817c",
+  "meta": {
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "E8IUfzlGRr60h8Em",
+  "tags": []
+}
