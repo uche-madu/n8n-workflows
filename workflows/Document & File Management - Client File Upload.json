@@ -1,0 +1,501 @@
+{
+  "name": "Document & File Management - Client File Upload",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "file",
+        "options": {
+          "keepSource": "both"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        1232
+      ],
+      "id": "484af231-6c60-4d01-82c5-6d712ff0edf2",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "operationMode": "documentLoader",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        1232
+      ],
+      "id": "fffb13b3-74d9-4746-b598-c856e524acdf",
+      "name": "Summarization Chain"
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $('Extract from File').item.json.text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        1456
+      ],
+      "id": "3e648bf7-9026-47b7-a07f-43eef6c4dff7",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 1500,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        2496,
+        1648
+      ],
+      "id": "398879df-0ae3-4f69-aad2-191ae3faeba3",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $('Webhook').item.json.body.clientName }}",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1ktOMiYII_mrwJzyvoLzns9mHIJ3pGFFB",
+            "mode": "list",
+            "cachedResultName": "Clients",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1ktOMiYII_mrwJzyvoLzns9mHIJ3pGFFB"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2784,
+        1232
+      ],
+      "id": "55bec7cb-1e73-483e-9ad7-9b047e6e28c9",
+      "name": "Retrieve Client Folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $('Webhook').item.json.body.documentType }}",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "={{ $json.id }}",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3008,
+        1232
+      ],
+      "id": "bbca8934-8488-429e-9cf7-3cf99cff1c0a",
+      "name": "Retrieve Client Subfolder",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "Temp",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1632,
+        768
+      ],
+      "id": "f7163eaa-0094-4a45-ad4c-b77789a25fbe",
+      "name": "Create Temp Folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "file",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "18BqwAFKnt9EO_aT8aSFYUFfhYBa5VtzH",
+          "mode": "list",
+          "cachedResultName": "Temp",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/18BqwAFKnt9EO_aT8aSFYUFfhYBa5VtzH"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2064,
+        1232
+      ],
+      "id": "b14a396d-e1dc-4782-96da-6a2ffc0e5962",
+      "name": "Upload to Temp Folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $('Upload to Temp Folder').item.json.name }}",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "18BqwAFKnt9EO_aT8aSFYUFfhYBa5VtzH",
+            "mode": "list",
+            "cachedResultName": "Temp",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/18BqwAFKnt9EO_aT8aSFYUFfhYBa5VtzH"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3216,
+        1232
+      ],
+      "id": "c22197f9-b286-49ef-a68e-99650e6b5140",
+      "name": "Retrieve Original File From Temp Folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Retrieve Client Subfolder').item.json.id }}",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3440,
+        1232
+      ],
+      "id": "96f75d84-524c-4737-a70c-4429396c31a2",
+      "name": "Move Original Upload from Temp to Subfolder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "client-upload",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        1232
+      ],
+      "id": "989cf3ea-87dc-487a-b938-b78110199b11",
+      "name": "Webhook",
+      "webhookId": "cbbab60f-5f1f-4b28-a6af-89d9071116da"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n  { summary: $('Summarization Chain').item.json.response.text }.toJsonString()\n}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3712,
+        1232
+      ],
+      "id": "8c084744-9db1-47da-84bd-586ff4255f54",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2192,
+        1440
+      ],
+      "id": "25a3d4a0-7f95-4599-b0ef-7cb2a2ff2b50",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "B5KEBW85AhVb5t24",
+          "name": "Uche Google Gemini(PaLM)"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "divverse-community.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+            "content-length": "299153",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "105.117.6.134",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "NG",
+            "cf-ray": "99372b8be3f4ef37-LHR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "multipart/form-data; boundary=----WebKitFormBoundaryFORKfmDA8DGjYIng",
+            "origin": "https://preview--nimbus-client-compass.lovable.app",
+            "priority": "u=1, i",
+            "referer": "https://preview--nimbus-client-compass.lovable.app/",
+            "sec-ch-ua": "\"Google Chrome\";v=\"141\", \"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"141\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "105.117.6.134, 141.101.98.63",
+            "x-forwarded-host": "divverse-community.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-45-5cf4858c8f-qprj7",
+            "x-is-trusted": "yes",
+            "x-real-ip": "105.117.6.134"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "clientName": "Proton LLC",
+            "documentType": "Technical Documentation",
+            "uploaderEmail": "uche.iheanyi.madu@gmail.com"
+          },
+          "webhookUrl": "https://divverse-community.app.n8n.cloud/webhook/client-upload",
+          "executionMode": "production"
+        },
+        "binary": {
+          "file": {
+            "mimeType": "application/pdf",
+            "fileType": "pdf",
+            "fileExtension": "pdf",
+            "data": "filesystem-v2",
+            "fileName": "AI Customer Service Representative Automation Sample FAQ  — Comprehensive Policies & Support Guide.pdf",
+            "id": "filesystem-v2:workflows/8D8v1P3PninWET9F/executions/temp/binary_data/0aaf96d2-3434-4914-b0e1-53b14627ad9b",
+            "fileSize": "299 kB"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Upload to Temp Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarization Chain": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Client Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Client Folder": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Client Subfolder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Client Subfolder": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Original File From Temp Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Temp Folder": {
+      "main": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Original File From Temp Folder": {
+      "main": [
+        [
+          {
+            "node": "Move Original Upload from Temp to Subfolder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move Original Upload from Temp to Subfolder": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "bbc0ddc3-6325-4426-8c0b-68eb7e84b3f9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "8D8v1P3PninWET9F",
+  "tags": []
+}

@@ -1,0 +1,307 @@
+{
+  "name": "Birthday Celebration Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "=0 9 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        224
+      ],
+      "id": "8d53c27b-e15a-4012-8ecf-0953ccc4d75f",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "user",
+        "operation": "getAll",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        224
+      ],
+      "id": "a77c4ed5-f433-4cfa-876e-54449f85a219",
+      "name": "Get many users",
+      "webhookId": "70ca5123-d432-4754-9fac-409aca48845a",
+      "credentials": {
+        "slackApi": {
+          "id": "WsEYDEri7ltTYCeK",
+          "name": "Uche Slack"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1dghSRxpdVqGAAiPReEIkQ1MUfxwyF73utx1lfTz2ip4",
+          "mode": "list",
+          "cachedResultName": "🎉 Loubby AI Employee Birthday Form  (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dghSRxpdVqGAAiPReEIkQ1MUfxwyF73utx1lfTz2ip4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1360962483,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dghSRxpdVqGAAiPReEIkQ1MUfxwyF73utx1lfTz2ip4/edit#gid=1360962483"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        224
+      ],
+      "id": "8516bb43-29e6-4d3d-ada7-1308eff61ac4",
+      "name": "Get Employees",
+      "executeOnce": true,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QPsmUAFxD8iiWTqC",
+          "name": "Uche's Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bcd0cff8-a65a-4433-8968-631a1712a783",
+              "leftValue": "={{ (() => {\n  const b = $json[\"Birthday  \"]; // original date string e.g. \"10/14/1993\"\n  if (!b) return null;\n  const parts = b.split('/');\n  return parts[0].padStart(2, '0') + '/' + parts[1].padStart(2, '0');\n})() }}\n",
+              "rightValue": "={{ (() => { const d = new Date($now); const m = String(d.getMonth()+1).padStart(2,'0'); const dd = String(d.getDate()).padStart(2,'0'); return m + '/' + dd; })() }}\n",
+              "operator": {
+                "type": "dateTime",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "12e9306a-0145-4d04-99ab-a05ff691b824",
+              "leftValue": "={{ $json[\" Consent  \"].startsWith('Yes') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        224
+      ],
+      "id": "72d6fe2b-4c37-451b-803f-ce52f0cabad5",
+      "name": "Filter for Today’s Birthdays and Consent"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Match today's birthday celebrants to their Slack user IDs\n * and return an array of celebrants with Slack IDs.\n */\nconst birthdayItems = $input.all(); // filtered employees\nconst slackUsers = $items(\"Get many users\", 0, 0).map(i => i.json);\n\n// Extract Slack user emails → IDs\nconst slackDirectory = slackUsers\n  .filter(u => u.profile && u.profile.email)\n  .map(u => ({\n    email: u.profile.email.trim().toLowerCase(),\n    id: u.id,\n    name: u.profile.real_name_normalized\n  }));\n\nconst celebrants = [];\n\nfor (const emp of birthdayItems) {\n  const email = (emp.json[\"Work Email \"] || \"\").trim().toLowerCase();\n  const slackMatch = slackDirectory.find(s => s.email === email);\n\n  celebrants.push({\n    fullName: emp.json[\"Full Name\"],\n    email,\n    slackId: slackMatch ? slackMatch.id : null,\n  });\n}\n\nconsole.log(\"🎂 Matched celebrants:\", celebrants);\n\nreturn [{ json: { celebrants } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        224
+      ],
+      "id": "0514dccd-2fdd-419f-b8ee-1da5cd135ce3",
+      "name": "Match Slack Users"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.celebrants }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are the company's fun and playful office assistant.\nYour job is to generate cheerful, natural-sounding birthday shoutouts for Slack using the list of celebrants provided as input.\n\nYou speak like a warm Nigerian colleague — casual, kind, and full of good vibes. You bring joy without sounding like a bot or an HR memo. Keep messages short (2–4 sentences), fun, and heartfelt.\n\nFollow these rules carefully:\n\nThe input will contain one or more Slack user IDs or handles (e.g. <@U04H4...>, <@U92K1...>). Mention them directly in the message.\n\nUse either <!channel> or <!everyone> once in the message (not both).\n\nIf there’s only one celebrant, make it a warm, personal shoutout.\n\nIf there are multiple, celebrate them all naturally — you can mention some together and others separately across the message, but it should sound human and flowy, not like a list. Don't insinuate that those mentioned together are friends - treat all as separate individuals on the team.\n\nBe positive and full of blessings — talk about joy, growth, laughter, soft life, or good energy for their new year.\n\nKeep it gender-neutral — never use “he,” “she,” “bro,” or “sis.”\n\nAvoid formal or robotic tone.\n\nAvoid m-dashes or n-dashes.\n\nUse emojis sparingly but playfully (1–3 max, like 🎉🎂🥳🎈).\n\nEnd by inviting others to drop their wishes in the thread.\n\nNote!!!\nThese are just examples below. Your messages dont have to say these exact words, just follow the guidelines above.\n\nExample 1:\n\n<!channel> Hey team! We’ve got some birthdays in the house 🎉 Big cheers to <@U04H4> and <@U92K1> — wishing you both more joy, soft life, and good vibes this year. Everyone, show them some love in the thread!\n\nExample 2:\n\n<!everyone> Guess who’s celebrating today? 🥳 It’s <@U04H4>! Wishing you plenty laughter, peace, and blessings as you step into your new year. Let’s drop those birthday wishes below! 🎂"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1120,
+        224
+      ],
+      "id": "a60bfdb5-ab80-413b-a975-abcd6bcc13c5",
+      "name": "Compose Birthday Message"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C08PMQ6UMJS",
+          "mode": "list",
+          "cachedResultName": "new-channel"
+        },
+        "text": "={{ $json.text }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1472,
+        224
+      ],
+      "id": "99c406c6-2c83-4f9f-895b-8dad87bf7572",
+      "name": "Send Birthday Message",
+      "webhookId": "2a1afec6-eb96-40c7-a16c-319ac9a89108",
+      "credentials": {
+        "slackApi": {
+          "id": "WsEYDEri7ltTYCeK",
+          "name": "Uche Slack"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1056,
+        432
+      ],
+      "id": "e2cb8dcb-49a1-4c9a-9841-773e784fd3af",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "C2RuixOGykv5BnMF",
+          "name": "OpenAi account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many users": {
+      "main": [
+        [
+          {
+            "node": "Get Employees",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Employees": {
+      "main": [
+        [
+          {
+            "node": "Filter for Today’s Birthdays and Consent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter for Today’s Birthdays and Consent": {
+      "main": [
+        [
+          {
+            "node": "Match Slack Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Slack Users": {
+      "main": [
+        [
+          {
+            "node": "Compose Birthday Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Birthday Message": {
+      "main": [
+        [
+          {
+            "node": "Send Birthday Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Compose Birthday Message",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "e0c8ff27-3355-4c16-8386-b156ef54749a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "5ds5T0dOvryJ5y7g",
+  "tags": []
+}

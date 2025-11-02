@@ -1,0 +1,620 @@
+{
+  "name": "Document & File Management - Hybrid Search RAG",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Set Metadata').item.json.file_id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf",
+              "drawingsToFormat": "application/pdf",
+              "slidesToFormat": "application/pdf",
+              "sheetsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "id": "af960ccc-5601-4486-81ab-cdc9608b5f92",
+      "name": "Download File From Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        -1104,
+        720
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {
+          "responseMode": "responseNode"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -2816,
+        608
+      ],
+      "id": "71dc2a6a-957b-4613-9331-078fa35392e7",
+      "name": "When chat message received",
+      "webhookId": "649d93a1-fc93-4099-9b3c-a5a1b0c7a12c"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "nimbus_knowledgebase",
+          "mode": "list",
+          "cachedResultName": "nimbus_knowledgebase"
+        },
+        "options": {
+          "queryName": "nimbus_hybrid_search"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -864,
+        720
+      ],
+      "id": "3998f35f-43b5-4a50-90da-f4abc752157e",
+      "name": "Create Vector Embeddings",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Fwxi3nahYkND0xFA",
+          "name": "Uche Madu - Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are an intelligent assistant that helps companies understand and answer questions about their clients' documents. These documents may include contracts, reports, identification forms, financial statements, and other business records.\n\nYour role is to interpret user queries, identify which clients and document folders they refer to, and retrieve accurate, factual answers using the provided tools.\n\nWhen a question involves multiple clients, folders, or document types:\n• Break the query into smaller, focused sub-questions.\n• For each sub-question, identify the corresponding client and folder using the `Get Clients and Folder Names` tool.\n• Call the `FAQ Vector Store` tool separately for each relevant client or folder to retrieve information.\n• Track your reasoning for each sub-question, and combine the findings into a single, coherent final answer.\n\nAvailable Tools:\n• `Get Clients and Folder Names` — Retrieves the list of clients and their document folders so you can determine which client(s) and folder(s) are relevant to the query.\n• `FAQ Vector Store` — Retrieves answers and document context from the knowledge base containing clients' documents.\n`Think` - You may use this tool to reason through issues when you encounter problems.\n\nGuidelines:\n• Always use `Get Clients and Folder Names` before calling `FAQ Vector Store` so you can determine the correct clientName and clientFolder values to include in the search.\n• Use only information retrieved from the documents. Do not speculate or infer beyond what is found in the content.\n• When responding, clearly distinguish information from different clients or folders when applicable.\n• If you cannot find the requested information, respond with:\n  “I could not find that information in the available documents.”\n• Maintain a professional, neutral tone at all times.\n• The final response should summarize or synthesize answers to all parts of the query clearly and concisely.\n\nCurrent time: {{ $now.toLocal() }}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -2608,
+        608
+      ],
+      "id": "c4f71302-a329-4c0e-b586-3e975f07b853",
+      "name": "RAG Chat Agent"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "documents",
+        "filterType": "string",
+        "filterString": "={{ 'metadata->>fileId=eq.' + $json.file_id + '&metadata->>clientName=eq.' + $json.client_name + '&metadata->>clientFolder=eq.' + $json.client_folder }}\"\n"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        720
+      ],
+      "id": "77a1636d-bda5-4eeb-a767-942736b0ea9f",
+      "name": "Delete Old Documents",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Fwxi3nahYkND0xFA",
+          "name": "Uche Madu - Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1328,
+        720
+      ],
+      "id": "f0524a7e-77dc-48c1-a146-65f2abec3338",
+      "name": "Limit to One File (Avoid Repetition)"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-drive-file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1968,
+        720
+      ],
+      "id": "5cbd53bf-3696-4351-9439-eb8176beb16d",
+      "name": "Webhook",
+      "webhookId": "6c014cc2-5d36-419f-99ca-a6237063a40d"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -2240,
+        608
+      ],
+      "id": "0f078ae0-a3df-4a9e-a06d-f5180181f591",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -2528,
+        848
+      ],
+      "id": "ae6d49fc-c786-4a87-940b-9018826f8f4e",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2bf1f6e4-1181-4d09-917c-6078aadc7d79",
+              "name": "file_id",
+              "value": "={{ $json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "fde41b1e-b929-4a2f-b53c-44d345aff1ce",
+              "name": "client_name",
+              "value": "={{ $json.body.path.split('/')[2] }}",
+              "type": "string"
+            },
+            {
+              "id": "608ea091-8382-4243-9c24-b25151330043",
+              "name": "client_folder",
+              "value": "={{ $json.body.path.split('/')[3] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1760,
+        720
+      ],
+      "id": "188066c2-3e74-41cb-9920-d350ecc9a698",
+      "name": "Set Metadata"
+    },
+    {
+      "parameters": {
+        "content": "## RAG Ingestion Phase with Hybrid Search and Metadata Filtering\n* Apps Script monitors folders and subfolders for file uploads and triggers the webhook",
+        "height": 720,
+        "width": 1664
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2016,
+        640
+      ],
+      "typeVersion": 1,
+      "id": "3df7348d-2e43-479f-ac05-86b47fd44524",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -848,
+        944
+      ],
+      "id": "6abd1c10-3d39-43d7-94ab-908df8a1139b",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "C2RuixOGykv5BnMF",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "fileId",
+                "value": "={{ $('Set Metadata').item.json.file_id }}"
+              },
+              {
+                "name": "clientName",
+                "value": "={{ $('Set Metadata').item.json.client_name }}"
+              },
+              {
+                "name": "clientFolder",
+                "value": "={{ $('Set Metadata').item.json.client_folder }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -656,
+        928
+      ],
+      "id": "8c1a0069-1b8b-41a2-9866-8c14d8e2b22d",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 200,
+        "chunkOverlap": 30
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        1088
+      ],
+      "id": "6afe3ec0-9ee9-4254-b8f7-e5acf0c6a62a",
+      "name": "Token Splitter1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Hybrid Search Vector store",
+        "method": "POST",
+        "url": "https://pideimppiouoawqifopz.supabase.co/functions/v1/nimbus_hybrid_search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "=clientName",
+              "value": "={{ $fromAI('parameters1_Value', `Name of the client in focus or null`, 'string') || null}}"
+            },
+            {
+              "name": "clientFolder",
+              "value": "={{ $fromAI('parameters2_Value', `Folder of the relevant files of the client or null`, 'string') || null }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -2208,
+        816
+      ],
+      "id": "8f23b58f-5ab5-4520-8524-6aa2553fe728",
+      "name": "FAQ Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Fwxi3nahYkND0xFA",
+          "name": "Uche Madu - Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT name, folder_ids \nFROM public.clients;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -2400,
+        848
+      ],
+      "id": "63164510-46cd-491d-84e0-8bfcd5cc507b",
+      "name": "Get Clients and Folder Names",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        -2304,
+        832
+      ],
+      "id": "4131d57e-c6b8-4198-ab08-da44d07b3e80",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2624,
+        816
+      ],
+      "id": "d71cd537-8f70-4aed-8ac3-70e1cae7bf40",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "B5KEBW85AhVb5t24",
+          "name": "Uche Google Gemini(PaLM)"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When chat message received": [
+      {
+        "json": {
+          "action": "sendMessage",
+          "sessionId": "8f3b8c46-f1b6-40c4-bc98-2f72c4ae7f2c",
+          "chatInput": "how about tera?"
+        }
+      }
+    ],
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "divverse-community.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (compatible; Google-Apps-Script; beanserver; +https://script.google.com; id: UAEmdDd_niRmv_yDhXTeBDybOB0GDw7nOjG8)",
+            "content-length": "261",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "34.98.136.131",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "995a420335ad801d-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "34.98.136.131, 172.70.135.118",
+            "x-forwarded-host": "divverse-community.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-45-5cf4858c8f-qprj7",
+            "x-is-trusted": "yes",
+            "x-real-ip": "34.98.136.131"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "1GFyNvzsG7MpfLorJ1kC-Y2mZcoSd8eAK",
+            "name": "AI Customer Service Representative Automation Sample FAQ  — Comprehensive Policies & Support Guide.pdf",
+            "path": "/Clients/Tera/Legal Documents",
+            "mimeType": "application/pdf",
+            "updated": "2025-10-23T08:06:09.288Z"
+          },
+          "webhookUrl": "https://divverse-community.app.n8n.cloud/webhook/new-drive-file",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Download File From Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG Chat Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old Documents": {
+      "main": [
+        [
+          {
+            "node": "Limit to One File (Avoid Repetition)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit to One File (Avoid Repetition)": {
+      "main": [
+        [
+          {
+            "node": "Download File From Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Metadata": {
+      "main": [
+        [
+          {
+            "node": "Delete Old Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Clients and Folder Names": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "f3f0ade9-d814-419e-afc2-519bc78243bd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "EDUVjcRXijS5L20W",
+  "tags": []
+}

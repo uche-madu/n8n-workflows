@@ -1,0 +1,270 @@
+{
+  "name": "Pharma-Patient Medication Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1LZ7SXsEepvEdzL4xyVyt_fBW-zMHoqFypuRyo3FrKhY",
+          "mode": "list",
+          "cachedResultName": "Pharmacy Patient & Prescription Entry - Automation  (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LZ7SXsEepvEdzL4xyVyt_fBW-zMHoqFypuRyo3FrKhY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1588837609,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LZ7SXsEepvEdzL4xyVyt_fBW-zMHoqFypuRyo3FrKhY/edit#gid=1588837609"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -80
+      ],
+      "id": "ce3b34dc-bdd1-4339-ba57-5e2020610a40",
+      "name": "Trigger on Form Submission",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "ERl3qgYxlemIrldK",
+          "name": "Uche - Google Sheets Trigger"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO pharma_patients (name, phone, email)\nVALUES ($1, $2, $3)\nON CONFLICT (email) DO NOTHING\nRETURNING id;\n",
+        "options": {
+          "queryReplacement": "={{ $json[\"Patient Name \"]}}, {{ $json[\"Phone Number  \"] }}, {{ $json[\"  Email  \"] }}\n"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        -176
+      ],
+      "id": "00034629-c461-47a6-bcb5-257bdb58a1ca",
+      "name": "Upsert Pharma_Patients Table",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO pharma_prescriptions (\n    patient_id,\n    medication,\n    dosage,\n    frequency_id,\n    start_date,\n    end_date,\n    refill_required,\n    notes\n)\nVALUES (\n    (SELECT id FROM pharma_patients WHERE email = $1),\n    $2,\n    $3,\n    (SELECT id FROM pharma_frequencies WHERE label = $4),\n    $5,\n    $6,\n    $7,\n    $8\n)\nRETURNING id;\n",
+        "options": {
+          "queryReplacement": "={{ $json[\"  Email  \"]}}, \n{{ $json[\"Medication Name  \"]}}, \n{{ $json[\"Dosage  \"]}}, \n{{ $json[\"Frequency  \"]}}, \n{{ $json[\"Start Date  \"]}}, \n{{ $json[\"End Date  \"]}}, \n{{ $json[\"Refill Required  \"] === \"Yes\" ? true : false}}, \n{{ $json[\"Notes (Optional)  \"] && $json[\"Notes (Optional)  \"].trim() !== \"\" ? $json[\"Notes (Optional)  \"] : null }}\n"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        16
+      ],
+      "id": "ac3a3b69-a4ad-4f57-bc24-63ca3724b777",
+      "name": "Upsert Pharma_Prescriptions Table",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT r.id,\n       r.scheduled_at,\n       r.type,\n       r.channel,\n       p.medication,\n       p.dosage,\n       pa.name,\n       pa.email,\n       pa.phone\nFROM   pharma_reminders r\nJOIN   pharma_prescriptions p ON r.prescription_id = p.id\nJOIN   pharma_patients pa     ON p.patient_id = pa.id\nWHERE  r.status = 'pending'\n  AND  r.scheduled_at <= now() + interval '1 hour'\n  AND  r.scheduled_at > now();\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        240
+      ],
+      "id": "27f1ddac-1aec-4b6a-a4ab-0abfead7f3bd",
+      "name": "Expose Scheduled Reminders",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT t.type, t.subject, t.body\nFROM pharma_templates t\nWHERE t.type = '{{$json[\"type\"]}}';\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        448,
+        240
+      ],
+      "id": "eabcf7ee-78e6-4462-ad03-41726d81382e",
+      "name": "Get  Template",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Expose Scheduled Reminders').item.json.email }}",
+        "subject": "={{ $json.email_subject }}",
+        "message": "={{ $json.email_body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        240
+      ],
+      "id": "b15dc244-9bbd-4df5-ae20-eb261b7f7553",
+      "name": "Send Reminder Mail",
+      "webhookId": "2a024fd1-d53d-4cab-bc42-ed90be025dc1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E6tZSl3afw1qUsqb",
+          "name": "Uche's Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const reminders = $('Expose Scheduled Reminders').all();\nconst templates = $input.all();\n\nlet results = [];\n\nfor (let i = 0; i < reminders.length; i++) {\n  const reminder = reminders[i].json;\n  const template = templates.find(t => t.json.type === reminder.type);\n\n  if (!template) continue; // skip if no matching template\n\n  let subject = template.json.subject;\n  let body = template.json.body;\n\n  // Replace placeholders\n  body = body\n    .replace('{{patient_name}}', reminder.name)\n    .replace('{{drug_name}}', reminder.medication)\n    .replace('{{scheduled_time}}', new Date(reminder.scheduled_at).toLocaleString())\n    .replace('{{dosage_instructions}}', reminder.dosage);\n\n  results.push({\n    json: {\n      email_to: reminder.email,\n      email_subject: subject,\n      email_body: body,\n      reminder_id: reminder.id // useful to later mark as sent\n    }\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        240
+      ],
+      "id": "395c4461-910f-40b5-8338-8396d76a7f34",
+      "name": "Replace Template Placeholders"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "3a9c9f1a-4fe1-4a13-be74-61a7ba349b78",
+      "name": "Hourly Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Trigger on Form Submission": {
+      "main": [
+        [
+          {
+            "node": "Upsert Pharma_Patients Table",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upsert Pharma_Prescriptions Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Pharma_Prescriptions Table": {
+      "main": [
+        []
+      ]
+    },
+    "Expose Scheduled Reminders": {
+      "main": [
+        [
+          {
+            "node": "Get  Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get  Template": {
+      "main": [
+        [
+          {
+            "node": "Replace Template Placeholders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Template Placeholders": {
+      "main": [
+        [
+          {
+            "node": "Send Reminder Mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hourly Trigger": {
+      "main": [
+        [
+          {
+            "node": "Expose Scheduled Reminders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "4e324982-6826-487c-9092-5d0224928c20",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "luJ5k61EAvTyXQkx",
+  "tags": []
+}

@@ -1,0 +1,527 @@
+{
+  "name": "Document & File Management - Client Onboarding",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "client-onboard",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1296,
+        624
+      ],
+      "id": "c078fffb-f845-433e-b474-b3a511a6b5f9",
+      "name": "Client Onboard Webhook",
+      "webhookId": "fb39bb43-beb9-49c4-82e6-79de1e8fdc03"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $('Client Onboard Webhook').item.json.body.clientName }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1ktOMiYII_mrwJzyvoLzns9mHIJ3pGFFB",
+          "mode": "list",
+          "cachedResultName": "Clients",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1ktOMiYII_mrwJzyvoLzns9mHIJ3pGFFB"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -624,
+        704
+      ],
+      "id": "d5e511e0-a8cb-4d6e-8c89-40719dcdab1d",
+      "name": "Create Client Folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $('Loop Over Subfolders').item.json.subfolderName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Loop Over Subfolders').item.json.parentFolderId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        496,
+        624
+      ],
+      "id": "ebbf9ada-c506-45d6-be86-cf9e963d597c",
+      "name": "Create Subfolders",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Client Onboard Webhook').all()\nconst items = [];\n\nfor (const item of input) {\n  const subfolders = item.json.body.subfolders;\n  const parentFolderId = $input.first().json.id;\n\n  for (const subfolderName of subfolders) {\n    items.push({\n      json: {\n        subfolderName,\n        parentFolderId\n      }\n    });\n  }\n}\n\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        624
+      ],
+      "id": "fa88a3d7-f1e7-4aee-9291-956ef541cda6",
+      "name": "Split Subfolders for Loop"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -176,
+        624
+      ],
+      "id": "3ff848ca-08cc-4136-9850-99abcedb63bb",
+      "name": "Loop Over Subfolders"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7649e15b-5007-4f0b-a49d-67fc5a242526",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -848,
+        624
+      ],
+      "id": "74a8385e-387f-44f0-8fde-91bdcaeb90f2",
+      "name": "Folder Exists"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $json.subfolderName }}",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "={{ $json.parentFolderId }}",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        48,
+        480
+      ],
+      "id": "8dd31ed4-0e07-4e63-b241-217e905ff7f7",
+      "name": "Search Subfolders",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $json.body.clientName }}",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1ktOMiYII_mrwJzyvoLzns9mHIJ3pGFFB",
+            "mode": "list",
+            "cachedResultName": "Clients",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1ktOMiYII_mrwJzyvoLzns9mHIJ3pGFFB"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1072,
+        624
+      ],
+      "id": "3ae8d741-7aac-4580-a971-78217b364403",
+      "name": "Search Folders",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1125b950-ebe1-49d9-9070-0724d500e91b",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        272,
+        560
+      ],
+      "id": "845b2249-7ee7-445f-acaa-72d1ff80c56d",
+      "name": "Subfolder Exists"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "share",
+        "folderNoRootId": {
+          "__rl": true,
+          "value": "={{ $json.folderId }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "={{ $json.role }}",
+            "type": "user",
+            "emailAddress": "={{ $json.email }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        944,
+        624
+      ],
+      "id": "c1e80fa3-a178-40c2-89bf-3605eaf3adba",
+      "name": "Grant Folder Access",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\nconst emails = $('Client Onboard Webhook').first().json.body.emails;\n\nfor (const item of $input.all()) {\n  const folderId = item.json.id;\n  const folderName = item.json.name;\n\n  for (const email of emails) {\n    results.push({\n      json: {\n        folderId,\n        folderName,\n        email,\n        role: \"writer\"\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        624
+      ],
+      "id": "90ef72f1-c4d2-4310-b9fc-6dd64aadb113",
+      "name": "Prepare Subfolder Permissions"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect relevant info safely\nconst clientName = $('Client Onboard Webhook').item.json.body.clientName;\n\nlet createdFolders = [];\ntry {\n  createdFolders = $('Create Subfolders').all().map(i => ({\n    id: i.json.id,\n    name: i.json.name,\n  }));\n} catch (e) {}\n\nreturn [\n  {\n    json: {\n      status: 'success',\n      message: `Client \"${clientName}\" successfully onboarded.`,\n      createdFolders,\n      timestamp: new Date().toISOString(),\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        624
+      ],
+      "id": "712c6eaf-c424-4b3c-9b44-22fea8fce93c",
+      "name": "Prepare Webhook Response"
+    }
+  ],
+  "pinData": {
+    "Client Onboard Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "divverse-community.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+            "content-length": "209",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "105.117.11.22",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "NG",
+            "cf-ray": "9931e103f08dbd82-LHR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://preview--nimbus-client-compass.lovable.app",
+            "priority": "u=1, i",
+            "referer": "https://preview--nimbus-client-compass.lovable.app/",
+            "sec-ch-ua": "\"Google Chrome\";v=\"141\", \"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"141\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "105.117.11.22, 172.70.86.79",
+            "x-forwarded-host": "divverse-community.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-45-5cf4858c8f-dd5k2",
+            "x-is-trusted": "yes",
+            "x-real-ip": "105.117.11.22"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "clientName": "Tera",
+            "subfolders": [
+              "Contracts & Agreements",
+              "Legal Documents",
+              "Marketing Materials",
+              "Proposals"
+            ],
+            "emails": [
+              "uche.iheanyi.madu@gmail.com"
+            ],
+            "notifySlack": false,
+            "slackTarget": "#client-onboarding"
+          },
+          "webhookUrl": "https://divverse-community.app.n8n.cloud/webhook/client-onboard",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Client Onboard Webhook": {
+      "main": [
+        [
+          {
+            "node": "Search Folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Client Folder": {
+      "main": [
+        [
+          {
+            "node": "Split Subfolders for Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Subfolders": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Subfolders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Subfolder Permissions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Subfolders for Loop": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Subfolders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Subfolders": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Search Subfolders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Folder Exists": {
+      "main": [
+        [
+          {
+            "node": "Split Subfolders for Loop",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Client Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Subfolders": {
+      "main": [
+        [
+          {
+            "node": "Subfolder Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Folders": {
+      "main": [
+        [
+          {
+            "node": "Folder Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Subfolder Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subfolder Exists": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Subfolders",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Subfolders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Subfolder Permissions": {
+      "main": [
+        [
+          {
+            "node": "Grant Folder Access",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grant Folder Access": {
+      "main": [
+        [
+          {
+            "node": "Prepare Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "13da6d02-0fbf-44aa-962e-c85f71380dc1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "IzszWXHztzvy5T59",
+  "tags": []
+}

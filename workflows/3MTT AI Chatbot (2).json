@@ -1,0 +1,646 @@
+{
+  "name": "3MTT AI Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Set Metadata').item.json.file_id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf",
+              "drawingsToFormat": "application/pdf",
+              "slidesToFormat": "application/pdf",
+              "sheetsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "id": "2539411a-b600-4dcb-883d-7f980264f3a7",
+      "name": "Download File From Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        1456,
+        112
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "RAXCd1EQ5OmgwnoC",
+          "name": "Uche Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "fmcide_3mtt_documents",
+          "mode": "list",
+          "cachedResultName": "fmcide_3mtt_documents"
+        },
+        "options": {
+          "queryName": "hybrid_search"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        1696,
+        112
+      ],
+      "id": "3a2b199f-a6c1-4e65-b406-4b2b27149b6f",
+      "name": "Create Vector Embeddings",
+      "credentials": {
+        "supabaseApi": {
+          "id": "5FJF8pO5obCclLOU",
+          "name": "Uche Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "=You are NITA - Nigerian Interactive Talent Advisor, the official AI support agent for the 3MTT (3 Million Technical Talent) programme. You are Nigeria's dedicated advisor for technical talent development, built to handle the most queries.\n\nCurrent {{ $now.toISO() }}\n\n---\n\n### Communication Style:\n- Proudly Nigerian and passionate about the country's tech future  \n- Interactive and engaging (ask follow-up questions when helpful)  \n- Professional but warm and encouraging  \n- Always ensure you confirm if the query has been resolved or if they need further assistance  \n- Solutions-oriented and specific  \n- Always briefly introduce yourself at the start of a new conversation  \n- Celebrate user achievements and progress  \n\n---\n\n### Role:\nYou are the **PRIMARY CONVERSATIONAL AGENT** – all users interact directly with you.  \nYou handle all conversations end-to-end but have access to a suite of specialized **Tool Agents**.\n\n---\n\n### Tool Agents:\n1. **Escalation Tool Agent**  \n   - Use for: Creating support tickets, checking ticket status, logging complex issues  \n   - Returns: Ticket IDs, escalation confirmations, ticket status updates  \n   - Inputs: firstname, lastname, email, query title, query description, task/instructions  \n\n   ⚠️ **Pre-Escalation Confirmation Required:**  \n   - Never escalate immediately.  \n   - First, show the user the details you plan to escalate in this exact format:\n\n   ---\n   **Please confirm the ticket details below before I create it:**\n\n   - First Name: {{firstName}}  \n   - Last Name: {{lastName}}  \n   - Email: {{email}}  \n   - Query Title: {{title}}  \n   - Description: {{description}}  \n\n   Reply **yes** to proceed, **no** to cancel, or provide corrections to edit details.  \n   ---\n\n   - Only after the user confirms with **yes** should you call the escalation tool.  \n   - If the user provides corrections, update the details and show them again for confirmation before escalating.  \n\n---\n\n### Knowledge Sources:\n1. **3MTT Vector Store (RAG Source)** – The **only** valid source of knowledge.  \n   - Use it to retrieve program info, courses, processes, deadlines, requirements, and client-specific documents.  \n   - You must not use your own trained knowledge to answer queries.  \n   - If the answer cannot be found in the vector store, clearly state:  \n     **“I could not find that information in the available documents.”**\n\n2. **Think Tool** – Use only for reasoning when stuck or confused.  \n   - Never generate answers from your own trained memory.  \n  \n\n---\n\n### When to Create Support Tickets:\n- Account access issues requiring system admin intervention  \n- Technical platform errors preventing basic functionality  \n- Document verification problems needing manual review  \n- Urgent requests with imminent deadlines requiring immediate human action  \n- Complex appeals or disputes about program decisions  \n- Issues with specific ALCs or training providers needing investigation  \n\n---\n\n### Response Style:\n1. **Congratulate when appropriate** – Celebrate achievements/selection  \n2. **Use RAG knowledge** for stable program info  \n3. **Be specific** – Provide exact URLs, deadlines, requirements  \n4. **Ask interactive questions** when clarification is needed  \n5. **Provide next steps** – Always end with clear action items  \n6. **Escalate only when truly necessary** – Most queries should be solved with your knowledge sources  \n7. **Encourage participation** in Nigeria’s digital transformation  \n\n---\n\n### IMPORTANT NOTES:\n- Always check the input required before calling a tool agent.  \n- Never call the escalation tool without first showing details for confirmation.  \n- Use dynamic data tools for live updates (opportunities, deadlines, events).  \n- Use RAG knowledge for stable processes and guidance.  \n- Encourage, guide, and celebrate users.  \n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        160,
+        0
+      ],
+      "id": "a915eb19-a4ba-4e7e-b767-06baecdc0168",
+      "name": "RAG Chat Agent"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "documents",
+        "filterType": "string",
+        "filterString": "==metadata->>fileId=eq.{{ $json.file_id }}"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        112
+      ],
+      "id": "1a8fb3af-7a9d-452a-820e-3b33a5cf4703",
+      "name": "Delete Old Documents",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "5FJF8pO5obCclLOU",
+          "name": "Uche Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        112
+      ],
+      "id": "c12e0284-8ed4-46ce-9e18-de443073481f",
+      "name": "Limit to One File (Avoid Repetition)"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-drive-file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        592,
+        112
+      ],
+      "id": "8759b44d-a772-4b37-a709-8b3b7317db1e",
+      "name": "Webhook",
+      "webhookId": "6c014cc2-5d36-419f-99ca-a6237063a40d"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        528,
+        0
+      ],
+      "id": "ce39adb6-fb7d-48cc-930c-82b1b915ee98",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        192
+      ],
+      "id": "58bdac29-6924-4187-8826-e7f9070f7347",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "ASaGSIBj5KnnUOBO",
+          "name": "Uche Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2bf1f6e4-1181-4d09-917c-6078aadc7d79",
+              "name": "file_id",
+              "value": "={{ $json.body.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        112
+      ],
+      "id": "539b4aa8-be65-44da-a0bf-c2be8782d936",
+      "name": "Set Metadata"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1664,
+        368
+      ],
+      "id": "81bae2a9-2efa-44a3-af72-ab9ef9ed3197",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "KtWVEjf0x1tIp6XE",
+          "name": "3MTT OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "fileId",
+                "value": "={{ $('Set Metadata').item.json.file_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1840,
+        368
+      ],
+      "id": "b06565d8-8794-4fea-be97-f9da654a41e6",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "chunkSize": 200,
+        "chunkOverlap": 30
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [
+        1936,
+        544
+      ],
+      "id": "4e6dd8b4-17db-4693-ac60-523f52dc9ec3",
+      "name": "Token Splitter"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3mtt-nita-chatbot",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        0
+      ],
+      "id": "f66ab890-4f41-42df-846c-8cf25f2101e2",
+      "name": "Webhook1",
+      "webhookId": "6c014cc2-5d36-419f-99ca-a6237063a40d"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        208
+      ],
+      "id": "552e4e89-8f2b-421a-8f63-8081055be239",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KtWVEjf0x1tIp6XE",
+          "name": "3MTT OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        256,
+        208
+      ],
+      "id": "7d7dc229-86ed-4087-8a6f-73f8e0e7d06d",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Hybrid Search Vector store",
+        "method": "POST",
+        "url": "https://pideimppiouoawqifopz.supabase.co/functions/v1/hybrid_search_3mtt",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        208
+      ],
+      "id": "dd596328-6f15-4e01-9234-0e03cb3064d9",
+      "name": "3MTT Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "5FJF8pO5obCclLOU",
+          "name": "Uche Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://4881bb5c2805.ngrok-free.app/v1/chat/completions",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": \"Bearer sk-fake-key\"\n  }",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"gpt-3.5-turbo\",\n    \"messages\": [\n      {\n        \"role\": \"user\", \n        \"content\": \"{{ $json.body.message }}\"\n      }\n    ],\n    \"temperature\": 0.7\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -96,
+        0
+      ],
+      "id": "9c4fe11b-b753-4492-ae8f-82ea6c247fcc",
+      "name": "Mock FastAPI LLM"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        64,
+        -144
+      ],
+      "id": "79c9ae73-a611-47b0-810a-68c0d1318256",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "description": "call this tool to escalate issues,\n\n- when creating a new ticket, provide the firstname, lastname, email, query title, query description, the task or instructions.\n\n- when you need a ticket status, input the ticketID along with the task or instructions, dont input firstname, lastname, email, query title, query description,",
+        "workflowId": {
+          "__rl": true,
+          "value": "gl7AOHKu2YfgYtq6",
+          "mode": "list",
+          "cachedResultName": "3MTT — Escalation Tool"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "firstName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('firstName', ``, 'string') }}",
+            "lastName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('lastName', ``, 'string') }}",
+            "email-address ": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email-address_', ``, 'string') }}",
+            "fellowID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fellowID', ``, 'string') }}",
+            "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('title', ``, 'string') }}",
+            "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('description', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "firstName",
+              "displayName": "firstName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lastName",
+              "displayName": "lastName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email-address ",
+              "displayName": "email-address ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fellowID",
+              "displayName": "fellowID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        336,
+        320
+      ],
+      "id": "b6a31d5e-589f-4e46-8c16-cdf284949e8c",
+      "name": "Escalation Tool"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Download File From Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG Chat Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old Documents": {
+      "main": [
+        [
+          {
+            "node": "Limit to One File (Avoid Repetition)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit to One File (Avoid Repetition)": {
+      "main": [
+        [
+          {
+            "node": "Download File From Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Metadata": {
+      "main": [
+        [
+          {
+            "node": "Delete Old Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Mock FastAPI LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3MTT Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock FastAPI LLM": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Chat Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1,
+    "errorWorkflow": "ApZjzznmTXJ8iYAw"
+  },
+  "versionId": "455d30f7-76aa-4593-9c14-8efe04351f80",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b5d089e75631aa9df458a0e6b57dd391254a0934bc8af8c052a1a5c30b3edab9"
+  },
+  "id": "KKvjA0LKxdrj7YCh",
+  "tags": []
+}

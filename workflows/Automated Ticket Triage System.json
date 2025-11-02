@@ -1,0 +1,337 @@
+{
+  "name": "Automated Ticket Triage System",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "12GFzOzturbXwqxNoo3faCiU_W7wmShO-QJ15G5oLVoQ",
+          "mode": "list",
+          "cachedResultName": "SwiftServe Customer Support Request (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12GFzOzturbXwqxNoo3faCiU_W7wmShO-QJ15G5oLVoQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1616049031,
+          "mode": "list",
+          "cachedResultName": "Responses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12GFzOzturbXwqxNoo3faCiU_W7wmShO-QJ15G5oLVoQ/edit#gid=1616049031"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        432
+      ],
+      "id": "b399d0f1-645a-4244-97db-f2c514a51cb7",
+      "name": "When a New Issue is Received from Google Forms",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "ERl3qgYxlemIrldK",
+          "name": "Uche - Google Sheets Trigger"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f369611f-2a46-46ef-aaf7-4a48ecacc6da",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "new",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        432
+      ],
+      "id": "0ea51596-e4d4-4880-8097-984c6c29fd50",
+      "name": "Select Only New Issues"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        448,
+        528
+      ],
+      "id": "10b3fafe-2c64-4cbe-a03e-f8cb2dfb85ba",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12GFzOzturbXwqxNoo3faCiU_W7wmShO-QJ15G5oLVoQ",
+          "mode": "list",
+          "cachedResultName": "SwiftServe Customer Support Request (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12GFzOzturbXwqxNoo3faCiU_W7wmShO-QJ15G5oLVoQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1616049031,
+          "mode": "list",
+          "cachedResultName": "Responses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12GFzOzturbXwqxNoo3faCiU_W7wmShO-QJ15G5oLVoQ/edit#gid=1616049031"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $('When a New Issue is Received from Google Forms').item.json.ID }}",
+            "Zendesk Ticket ID": "={{ $json.id }}",
+            "Status": "created"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name ",
+              "displayName": "Full Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Address  ",
+              "displayName": "Email Address  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Issue Category  ",
+              "displayName": "Issue Category  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Issue Description  ",
+              "displayName": "Issue Description  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Zendesk Ticket ID",
+              "displayName": "Zendesk Ticket ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        880,
+        320
+      ],
+      "id": "de96c882-ad9f-4fbc-95d2-cd20956b241f",
+      "name": "Update Sheet with Ticket ID",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QPsmUAFxD8iiWTqC",
+          "name": "Uche's Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://gadahuhelp.zendesk.com/api/v2/groups.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "zendeskApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        64
+      ],
+      "id": "e49450d4-3ae7-4de7-9c14-6d974bc317ec",
+      "name": "Retrieve Zendesk Group IDs",
+      "credentials": {
+        "zendeskApi": {
+          "id": "K6lkt2r5FgD9MneP",
+          "name": "Uche Gadahu Zendesk API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "={{ $('Select Only New Issues').item.json[\"Issue Description  \"] }}",
+        "jsonParameters": true,
+        "additionalFieldsJson": "={{ $json.zendesk_payload }}"
+      },
+      "type": "n8n-nodes-base.zendesk",
+      "typeVersion": 1,
+      "position": [
+        672,
+        320
+      ],
+      "id": "d8fd4eb0-4b6c-412a-abb0-289c9b329ce0",
+      "name": "Create Zendesk Ticket",
+      "credentials": {
+        "zendeskApi": {
+          "id": "K6lkt2r5FgD9MneP",
+          "name": "Uche Gadahu Zendesk API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const name = item.json[\"Full Name \"]?.trim() || \"Unknown\";\n  const email = item.json[\"Email Address  \"]?.trim() || \"unknown@example.com\";\n  const category = item.json[\"Issue Category  \"]?.trim() || \"General Inquiry\";\n  const description = item.json[\"Issue Description  \"]?.trim() || \"No description provided.\";\n\n  const groupMap = {\n    \"Billing\": 39818440586897,\n    \"General Inquiry\": 39818446673425,\n    \"Technical Problem (App/Website)\": 39818500575761\n  };\n\n  const groupId = groupMap[category] || 36197295570961;\n\n  const zendeskPayload = {\n    requester: {\n      name,\n      email\n    },\n    subject: `${category} issue from ${name}`,\n    description,\n    tags: [category.toLowerCase().replace(/\\s+/g, \"_\"), \"n8n\"],\n    group_id: groupId\n  };\n\n  return {\n    json: {\n      zendesk_payload: JSON.stringify(zendeskPayload)\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        320
+      ],
+      "id": "f15543e5-89be-4f5b-a650-e18db1eafea6",
+      "name": "Format Zendesk Ticket Payload"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When a New Issue is Received from Google Forms": {
+      "main": [
+        [
+          {
+            "node": "Select Only New Issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Only New Issues": {
+      "main": [
+        [
+          {
+            "node": "Format Zendesk Ticket Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Zendesk Ticket": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet with Ticket ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Zendesk Ticket Payload": {
+      "main": [
+        [
+          {
+            "node": "Create Zendesk Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "9fa616ec-ea44-4618-9c45-dfedbce48a1f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "CD3iUS2gC2zQzqBR",
+  "tags": []
+}

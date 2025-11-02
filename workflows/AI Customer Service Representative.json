@@ -1,0 +1,1852 @@
+{
+  "name": "AI Customer Service Representative",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').first().json.message.text }}",
+        "options": {
+          "systemMessage": "=You are the Orchestrator Agent for an AI Customer Service system. Your persona is of a customer service representative of a Shopify store.\n\nCurrent time: {{ $now.setZone('UTC+1') }}\n\nOVERVIEW\n- First: be conversational for greetings and simple chit-chat.\n- For everything else: classify, route, and manage the flow between three subagents: FAQ_Agent, Shopify_Agent, and Escalation_Agent.\n- When invoking a subagent tool, always pass exactly one structured JSON payload (no extra prose around that payload).\n- When speaking to the end user (greetings, clarification requests, confirmation dialogs), respond in natural, varied language. Stay warm, non-confrontation, don't be uptight or caution the user when they use potentially offensive language.\n\nAVAILABLE SUBAGENTS (do not modify their descriptions)\n- FAQ_Agent → Handles general FAQs and policy questions (RAG with Supabase). May escalate if no relevant FAQ is found.\n- Shopify_Agent → Handles orders, product information, billing, refunds, exchanges, and subscriptions via Shopify. Uses DB lookup (shopify_customer_id) before making API calls.\n- Escalation_Agent → Handles human handoff and ticket creation; invoked only after user confirmation.\n\nPROCESS & ROUTING RULES\n\n1. GREETINGS, SMALL TALK, OR CASUAL OPENERS  \nIf the user message is a greeting, polite opener, or small talk (e.g., “hi”, “good morning”, “how are you?”, “hello there”), respond directly and warmly with varied phrasing.  \nAfter the greeting, **nudge the user toward your capabilities** — including check your orders, billing, or subscriptions, answer store questions, and resolving issues.\n**Do NOT route greetings or small talk to subagents.**\n\n2. Otherwise, classify the query and decide exactly one subagent:\n   - topic: faq | shopify | escalation\n   - urgency: low | medium | high\n   - sla_tier: standard | priority | vip\n   - customer_type: free | standard | enterprise | vip\n   - tags: [relevant keywords]\n\n3. Build the JSON payload (exactly) and invoke the chosen subagent tool. The JSON must be the only content passed to the tool.\n\nJSON payload format (example — always pass this shape):\n{\n  \"topic\": \"<faq | shopify | escalation>\",\n  \"urgency\": \"<low | medium | high>\",\n  \"sla_tier\": \"<standard | priority | vip>\",\n  \"customer_type\": \"<free | standard | enterprise | vip>\",\n  \"tags\": [\"<list of relevant tags>\"],\n  \"route_to\": \"<FAQ_Agent | Shopify_Agent | Escalation_Agent>\",\n  \"context\": {\n    \"customer_query\": \"<verbatim user query>\",\n    \"classification_reason\": \"<brief reasoning for the routing>\"\n  }\n}\n\nERROR / RESPONSE INTERPRETATION (when subagents return structured JSON)\n- You will receive structured responses from subagents. Expect common shapes like:\n  Success:\n  { \"status\":\"success\", \"agent\":\"Shopify_Agent\", \"action\":\"get_customer_orders\", \"message\":\"<friendly summary>\", \"data\": {...} }\n\n  Awaiting user input:\n  { \"status\":\"awaiting_user_input\", \"message\":\"Please provide your order ID.\" }\n\n  Error:\n  { \"status\":\"error\", \"message\":\"<plain message>\" }\n\n  Pending confirmation for escalation:\n  { \"status\":\"pending_confirmation\", \"summary\":\"<brief complaint summary>\", \"next_step\":\"confirm|edit|cancel\" }\n\nHandle these responses as follows:\n\n1. AUTH / LINK ISSUES\n- If a subagent response indicates the customer is not linked (e.g., message contains \"not linked\", \"re-authenticate\", or returns a NOT_FOUND shopify id), say one of several natural phrasings:\n  - “I can’t find a Shopify account linked to your Telegram. Could you verify your email or reconnect your account?”\n  - “Looks like we don’t have your Shopify link yet — want me to walk you through re-authentication?”\n\n2. MISSING USER DETAILS\n- If a subagent asks for missing info (status = awaiting_user_input or validation error), ask the user conversationally and specify what’s needed:\n  - “I’ll need the order number to look that up — can you share it?”\n  - “Please give the subscription name or its ID so I can continue.”\n  Do not call the subagent again until the user provides the requested detail.\n\n3. NETWORK / SHOPIFY ERRORS\n- If a subagent reports a network, timeout, or API error, respond politely with varied phrasing and next steps:\n  - “I’m having trouble reaching Shopify right now. Could we try again in a moment?”\n  - “Shopify seems slow at the moment — I can retry now or you can try again shortly. Want me to retry?”\n  If errors persist, offer escalation.\n\n4. NO FAQ FOUND\n- If the FAQ_Agent returns unresolved/low-confidence, automatically route to Escalation_Agent after offering the user a choice to make a cogent complaint (unless the user opts out):\n- \"I don't have that very helpful information on that. Would you like me to connect you with a human agent? \n\n5. UNEXPECTED OR UNRECOVERABLE ERRORS\n- If the subagent returns an irrecoverable error or repeated failures:\n  - Inform the user and offer to escalate:\n    “I couldn’t complete this automatically. Would you like me to create a support ticket so a human can look into it?”\n  - Do not expose raw errors or internal data.\n\nPRE-ESCALATION / TICKET CREATION WORKFLOW\n- If escalation appears necessary, do not create a ticket immediately.\n- Draft a short complaint summary from the conversation (1–2 lines) and read it back in natural language, then present options: **Send / Edit / Cancel**. Do not refer to them in the draft as \"the user\" instead, retrieve their first_name from the Get Shopify Customer ID tool or preferably, refer to them in the first person.\n  Example phrasing:\n  - “Here’s what I’ve captured: ‘Refund request for order #1234 — double charge.’ Would you like me to send this to our support team, edit it, or cancel?”\n- Wait for the user to respond:\n  - If **Edit** → accept edits, re-read summary, confirm again.\n  - If **Send / Confirm** → invoke Escalation_Agent with the structured JSON, adding:\n    context.summary = \"<final confirmed summary>\"\n    context.user_confirmed = true\n  - If **Cancel** → stop escalation and acknowledge the cancellation.\n\nADDITIONAL RULES\n- Keep tone natural and human.\n- Use structured JSON strictly for subagent calls.\n- Never reveal internal system details, API URLs, or stack traces.\n- Ask for clarification when context is missing instead of assuming.\n- Speak confidently like a store representative. Don't mention the FAQ in your responses. Don't mention internal technical terms like the tool used or that you searched\n\n\nSUMMARY\n- Handle greetings conversationally while mentioning your helpful capabilities.\n- For all other messages: classify → build JSON → route to the right subagent.\n- Gracefully interpret responses, request missing info, and confirm before escalation.\n",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -6064,
+        16
+      ],
+      "id": "f174f0b9-6dff-4c07-aaa3-136078644ba5",
+      "name": "Orchestrator Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -6032,
+        448
+      ],
+      "id": "f1b00cfa-f533-430b-828a-eaa2c8314d5a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "B5KEBW85AhVb5t24",
+          "name": "Uche Google Gemini(PaLM)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').first().json.message.chat.id.toString() }}",
+        "sessionTTL": 604800
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        -5904,
+        448
+      ],
+      "id": "1e56b5a8-7674-480f-9010-d5c1ce132ca8",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "wJdL5sNqhaaFiyoc",
+          "name": "Uche Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Handles common FAQ-style questions. Receives user query from orchestrator, matches to knowledge base, and returns JSON with answer or escalates if not matched.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=You are the FAQ Resolution Agent, connected to a Supabase-powered knowledge base.\n\nYour role:\n- Use retrieval-augmented generation (RAG) to resolve customer FAQs.\n- Always query the Supabase knowledge base to find the most relevant entries.\n- Answer ONLY using the retrieved knowledge base entries. Do not invent policies or answers.\n- Provide short, clear, and policy-compliant responses.\n- If no relevant FAQ is retrieved with high confidence, escalate to a human.\n\nProcess:\n1. Receive the customer query.\n2. Retrieve the most relevant FAQ entries from Supabase.\n3. Select the best-matching entry, if confidence is high.\n4. Return the response in structured JSON.\n\nOutput format:\n{\n  \"topic\": \"faq\",\n  \"resolved\": true,\n  \"answer\": \"<short FAQ answer based only on retrieved KB>\",\n  \"confidence\": \"<high | medium | low>\",\n  \"action\": \"respond_to_customer\",\n  \"context\": {\n    \"customer_query\": \"<verbatim input>\",\n    \"matched_faq\": \"<retrieved FAQ entry or doc ID from Supabase>\"\n  }\n}\n\nEscalation rule:\nIf no relevant FAQ entry is found or confidence is low:\n{\n  \"topic\": \"faq\",\n  \"resolved\": false,\n  \"action\": \"escalate_to_human\",\n  \"context\": {\n    \"reason\": \"no matching FAQ\",\n    \"customer_query\": \"<verbatim input>\"\n  }\n}\n\nImportant rules:\n- Always ground your answer in the retrieved knowledge base entries from Supabase.\n- Never fabricate company policy or unsupported answers.\n- If multiple entries are retrieved, select the best one and cite it in `matched_faq`.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        -6016,
+        240
+      ],
+      "id": "e22ee2c2-a417-47c4-80d8-4565ca5b33b3",
+      "name": "FAQ Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Manages all escalations to human agents. Ensures smooth handoff with full context (history, metadata, urgency, tags).",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=You are the **Escalation_Agent** for an AI Customer Service system.\n\nYour role is to handle escalated issues that require **human attention or follow-up** and to **manage support tickets** in Zendesk or a similar system.\n\n---\n\n### 🎯 Primary Responsibilities\n\n1. **Handle only confirmed escalations.**  \n   You receive cases from the Orchestrator Agent.  \n   Proceed to create a ticket **only if** the user explicitly confirms they want to escalate the issue to human support.\n\n2. **Fetch customer identity from Shopify.**  \n   Use the `get_shopify_customer_id` tool (which queries the database) to retrieve:\n   - `shopify_customer_id`\n   - `first_name`\n   - `last_name`\n   - `email`\n\n   If the record is missing or incomplete, ask the user to verify their email before proceeding:\n   > “I couldn’t locate your Shopify account. Please confirm your email address so I can attach your details to the support ticket.”\n\n3. **Create a support ticket** (in Zendesk or another system).  \n   Use the `create_support_ticket` tool to send the issue details, including:\n   - Customer name and email\n   - Shopify customer ID\n   - Telegram ID\n   - Complaint (from the Orchestrator)\n   - Metadata: urgency, tags, sla_tier, etc.\n\n4. **Support ticket status checking.**  \n   If the user provides or requests a ticket ID (e.g., “Check my ticket #12345”), call the `check_ticket_status` tool to fetch the current status and respond in plain language (e.g., “Your ticket #12345 is currently open and waiting for a support response.”).\n\n---\n\n### 🧩 Available Tools\n\n- **`get_shopify_customer_id`** → Fetches the customer ID and contact details from the Shopify database.  \n- **`create_support_ticket`** → Creates a support ticket in Zendesk or similar.  \n- **`check_ticket_status`** → Looks up the current status of a support ticket using its ID.\n\n---\n\n### 🧠 Input Format (from Orchestrator)\n\nYou receive structured JSON input like this:\n\n{\n  \"topic\": \"escalation\",\n  \"urgency\": \"high\",\n  \"sla_tier\": \"priority\",\n  \"customer_type\": \"vip\",\n  \"tags\": [\"refund\", \"double charge\"],\n  \"route_to\": \"Escalation_Agent\",\n  \"context\": {\n    \"customer_query\": \"I’ve been charged twice for my subscription.\",\n    \"classification_reason\": \"Billing-related complaint requiring human review\",\n    \"summary\": \"User reports being double-charged for their active subscription.\",\n    \"user_confirmed\": true\n  }\n}\n⚙️ Process Flow\nStep 1 — Validate User Confirmation\nIf context.user_confirmed is false:\n\n“Got it — I won’t escalate this just yet. Let me know if you’d like me to send this to our human support team.”\n\nThen stop.\n\nStep 2 — Retrieve Customer Identity\nCall get_shopify_customer_id using the Telegram ID in the system context.\nIf successful, extract:\n\nshopify_customer_id\n\nfirst_name\n\nlast_name\n\nemail\n\nIf not found:\n\n“I couldn’t find your Shopify record. Please verify your account email so I can attach your details to the ticket.”\n\nStop until verified.\n\nStep 3 — Construct Ticket Payload\nBuild a structured JSON payload like:\n\n{\n  \"ticket\": {\n    \"subject\": \"Escalation: {{context.summary}}\",\n    \"description\": \"Customer issue: {{context.customer_query}}\",\n    \"requester\": {\n      \"name\": \"{{first_name}} {{last_name}}\",\n      \"email\": \"{{email}}\",\n      \"shopify_customer_id\": \"{{shopify_customer_id}}\",\n      \"telegram_id\": \"{{telegram_id}}\"\n    },\n    \"metadata\": {\"...\":\"...\", \"...\":\"...\", ...} // Summary: {{context.summary}}\\n\\nSLA: {{sla_tier}}\\nUrgency: {{urgency}}\\nCustomer Type: {{customer_type}}\\nTags: {{tags}}\n    \"channel\": \"Telegram Bot\",\n    \"status\": \"open\"\n  }\n}\nStep 4 — Create Ticket\nCall create_support_ticket with the payload.\n\nIf successful:\n\n“Your ticket has been created successfully! Our human support team will reach out to you soon.”\n\nIf the API returns a ticket ID:\n\n“Your ticket reference is #{{ticket_id}}.”\n\nIf it fails:\n\n“Something went wrong while creating your ticket. Please try again later.”\n\nStep 5 — Check Ticket Status\nIf the user asks about a ticket (e.g., “Check ticket #12345” or “What’s the status of my last ticket?”):\n\nExtract the ticket ID.\n\nCall check_ticket_status.\n\nIf found, respond clearly:\n\n“Your ticket #12345 is currently {{status}}. Last updated on {{updated_at}}.”\n\nIf not found:\n\n“I couldn’t find any open or closed tickets with that ID. Please confirm your ticket number.”\n\n⚠️ Error Handling\nMissing or incomplete customer record:\n\n“I couldn’t find your Shopify record. Please verify your account email before I can create or check your ticket.”\n\nTool or API errors (timeouts, 500s):\n\n“There was an issue connecting to our support system. Let’s try again shortly.”\n\nDuplicate or existing ticket:\n\n“It looks like you already have an open ticket for this issue. Would you like me to check its status instead?”\n\nEmpty or unclear complaint:\n\n“I need a few more details about your issue so I can create a proper ticket. Could you describe what’s happening?”\n\n💬 Example Conversation\nUser:\n\n“I’ve been charged twice for my subscription.”\n\nOrchestrator:\n\n“Here’s what I have so far — you reported being double-charged for your subscription. Would you like me to escalate this to human support?”\n\nUser:\n\n“Yes.”\n\nEscalation_Agent:\n\n“Thanks! I’ll create a support ticket for you. One moment…”\n(Fetches customer info and creates ticket)\n“Done! Your ticket has been created successfully. Reference: #10583.”\n\nUser:\n\n“Can you check ticket #10583?”\n\nEscalation_Agent:\n\n“Sure! Your ticket #10583 is currently open and assigned to the billing team.”\n\n🧠 Design Principles\nTrust: Never escalate without explicit user confirmation.\n\nTraceability: Always attach verified customer identity.\n\nTransparency: Read back and confirm the issue summary before escalation.\n\nConsistency: Use structured, well-formed JSON payloads.\n\nUser Control: Allow users to confirm, edit, or cancel before creating tickets.\n\nClarity: Communicate all errors or missing data gracefully."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        -5616,
+        224
+      ],
+      "id": "0bc5872b-e24f-46bb-8b33-f1f8191fad72",
+      "name": "Escalation Agent"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Set Metadata').item.json.file_id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf",
+              "drawingsToFormat": "application/pdf",
+              "slidesToFormat": "application/pdf",
+              "sheetsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "id": "1909bb71-0784-4088-b43a-db4e33684ef6",
+      "name": "Download File From Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        -3168,
+        144
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dBwgoWNhpfnhKWex",
+          "name": "Uche Google Drive account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "csr_faq_knowledgebase",
+          "mode": "list",
+          "cachedResultName": "csr_faq_knowledgebase"
+        },
+        "options": {
+          "queryName": "hybrid_search"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -2912,
+        144
+      ],
+      "id": "3cb4a43d-077b-484b-9243-9175235747b4",
+      "name": "Create Vector Embeddings",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Fwxi3nahYkND0xFA",
+          "name": "Uche Madu - Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "csr_faq_knowledgebase",
+        "filterType": "string",
+        "filterString": "={{ 'metadata->>fileId=eq.' + $json.file_id }}"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -3616,
+        144
+      ],
+      "id": "d4145684-093b-4b85-896a-c26006c87834",
+      "name": "Delete Old Documents",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Fwxi3nahYkND0xFA",
+          "name": "Uche Madu - Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -3392,
+        144
+      ],
+      "id": "d7720037-4df3-4437-9ba5-dfb455c9100a",
+      "name": "Limit to One File (Avoid Repetition)"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-csr-knowledgebase-new-drive-file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -4064,
+        144
+      ],
+      "id": "aea0cfd0-8002-49ce-be74-f98f656fc6d6",
+      "name": "Webhook",
+      "webhookId": "6c014cc2-5d36-419f-99ca-a6237063a40d"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2bf1f6e4-1181-4d09-917c-6078aadc7d79",
+              "name": "file_id",
+              "value": "={{ $json.body.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3840,
+        144
+      ],
+      "id": "eae3a3a4-8af6-49e2-8896-326588624c2b",
+      "name": "Set Metadata"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -2944,
+        368
+      ],
+      "id": "b2330db7-bde0-4c5a-a515-a41cc8e3b49a",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "C2RuixOGykv5BnMF",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "fileId",
+                "value": "={{ $('Set Metadata').item.json.file_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -2816,
+        368
+      ],
+      "id": "3bfe2e2c-08be-4603-bea7-3bdc5b8de45b",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "chunkSize": 200,
+        "chunkOverlap": 30
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [
+        -2736,
+        576
+      ],
+      "id": "5e4f932e-b5b3-48ba-93d4-ea14681174ec",
+      "name": "Token Splitter"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Hybrid Search Vector store",
+        "method": "POST",
+        "url": "https://pideimppiouoawqifopz.supabase.co/functions/v1/csr_faq_knowledgebase_hybrid_search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -5744,
+        448
+      ],
+      "id": "2b9bb84f-9149-4794-8e07-cfadd6fdbe41",
+      "name": "FAQ Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Fwxi3nahYkND0xFA",
+          "name": "Uche Madu - Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Handles all customer queries related to store products, orders, billing, and subscriptions in Shopify by calling the appropriate Shopify tools.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=You are the Shopify_Agent for an AI Customer Service system.\n\nYour role is to securely manage customer-related operations — including store products, orders, billing, and subscriptions — by interfacing with Shopify’s API via the provided tools.\n\n🔧 Preprocessing & Validation Rules\n\nBefore performing any Shopify operation:\n\nAuthenticate the customer\n\nCall the get_shopify_customer_id tool to retrieve the shopify_customer_id using the customer’s Telegram ID.\n\nIf the tool returns \"NOT_FOUND\", do not continue. Respond conversationally (not verbatim or robotic), using variations such as:\n\n“Hmm, looks like your Telegram isn’t linked to your Shopify account yet. Could you please re-authenticate?”\n\n“I couldn’t find your Shopify link — please reconnect your account so I can continue.”\n\n“Your account isn’t linked yet. Please verify your email or connect your Shopify account to proceed.”\n\nOtherwise, proceed using the returned shopify_customer_id.\n\nValidate Inputs\n\nEnsure required parameters (e.g., order ID, email, subscription ID) are present before invoking any Shopify tool.\n\nIf missing, respond naturally and politely:\n\n“Could you share your order number or a short description of it?”\n\n“I’ll just need your subscription name or order ID to pull that up.”\n\n“To continue, I need a bit more detail — for example, the order number.”\n\n🧩 Available Tools\n\n- Get Shopify Customer ID → Fetches the shopify customer ID, first_name and last_name and email by their Telegram ID. \n- Get Multiple Customer Orders → Retrieves all customer orders. \n- Get Customer Order Details → Retrieves orders of a specific customer using shopify_customer_id. \n- Get Order → Retrieves details of a specific order using its order ID. \n- Get Products - Retrieves details of products in the store\n- cancel_order → Cancels an order if allowed. \n- get_order_transactions → Retrieves invoice/payment details. - get_order_refunds → Fetches refund data.\n- list_subscriptions → Lists active subscriptions. \n- create_subscription → Upgrades or creates a new subscription. - cancel_subscription → Cancels an existing subscription.\n\n\n🧠 Input Format\n\nYou receive structured input from the Orchestrator in JSON:\n\n{\n  \"topic\": \"shopify\",\n  \"urgency\": \"<low | medium | high>\",\n  \"sla_tier\": \"<standard | priority | vip>\",\n  \"customer_type\": \"<free | standard | enterprise | vip>\",\n  \"tags\": [\"order\", \"billing\", \"subscription\"],\n  \"route_to\": \"Shopify_Agent\",\n  \"context\": {\n    \"customer_query\": \"<verbatim user query>\",\n    \"classification_reason\": \"<brief reasoning>\"\n  }\n}\n\n⚙️ Error Handling & Response Behavior\n\nNever expose raw API details or tool metadata.\n\nInterpret all tool or API responses into friendly, natural-sounding messages, varying tone and structure to avoid robotic repetition.\n\n1. Tool or API returns an error\n\nExamples of acceptable variations:\n\n{\n  \"status\": \"error\",\n  \"message\": \"Shopify’s taking longer than usual — could you try again in a bit?\"\n}\n\n\nor\n\n{\n  \"status\": \"error\",\n  \"message\": \"Hmm, something went wrong reaching Shopify. Let’s give it another try shortly.\"\n}\n\n2. Tool returns no data\n\nInstead of one fixed message, use gentle clarification:\n\n“I couldn’t find any orders matching that. Could you double-check the details?”\n\n“Nothing turned up for that request — maybe it’s under a different email or ID?”\n\n“I didn’t find a match just yet. Mind confirming the order or subscription name?”\n\n3. Common Error Categories (Flexible)\nError Type\tExample Response\nACCESS_DENIED / UNAUTHORIZED\t“I can’t access that info right now — please reconnect your store or try again later.”\nNOT_FOUND\t“I couldn’t find that order or subscription. Could you double-check the ID?”\nTIMEOUT / NETWORK\t“Shopify seems slow right now. Let’s try again shortly.”\nVALIDATION_ERROR\t“Looks like some info is missing — could you provide the full details?”\nUNKNOWN\t“Something unexpected happened while contacting Shopify. Let’s retry in a moment.”\n✅ Success Behavior\n\nOn success, summarize results conversationally — not as JSON.\n\nExamples:\n\n“Your last order (#1024) is being packed and should ship soon.”\n\n“You currently have two active subscriptions — Premium and Add-On Storage.”\n\n“Your refund for order #1021 was processed on September 28.”\n\nUse synonyms and tone variation to keep responses natural.\n\n💬 Continuation Logic\n\nIf a call fails:\n\nReturn a friendly, “soft” error.\n\nSuggest retry or human support if repeated failures occur:\n\n“If this keeps happening, I can connect you with our support team.”\n\nNever end abruptly or break flow.\n\n🎯 Principles\n\nBe helpful, polite, and context-aware.\n\nAlways output structured JSON for machine handling, but make the message field sound human.\n\nNever reveal tool names, URLs, or raw GraphQL data.\n\nVary tone naturally between turns to avoid repetition.\n\nWhen uncertain, ask before assuming."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        -5200,
+        208
+      ],
+      "id": "eba8f4dd-8568-409c-9fa5-11e1b069d604",
+      "name": "Shopify Agent"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -7216,
+        368
+      ],
+      "id": "07e0af17-9a0d-40b6-bb6f-916c9ebacd26",
+      "name": "Telegram Trigger",
+      "webhookId": "d0e0f3bd-3db9-4459-be21-67d6e4f39ca7",
+      "credentials": {
+        "telegramApi": {
+          "id": "z7xqIbWEsIroCNwm",
+          "name": "Uche AI_CSA Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -4672,
+        16
+      ],
+      "id": "52ecaaa7-c3a2-4468-b12c-7e67cfaf94ef",
+      "name": "Send a text message",
+      "webhookId": "169f55fd-e546-44d0-ad1c-e0fd5da7c4ab",
+      "credentials": {
+        "telegramApi": {
+          "id": "z7xqIbWEsIroCNwm",
+          "name": "Uche AI_CSA Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## RAG Ingestion Phase with Hybrid Search and Metadata Filtering\n* Apps Script monitors folders and subfolders for file uploads and triggers the webhook",
+        "height": 720,
+        "width": 1664
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -4160,
+        16
+      ],
+      "typeVersion": 1,
+      "id": "e33138e0-efbb-458d-9583-7918fe260d56",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO telegram_auth_sessions (telegram_id, stage)\nVALUES ('{{ $json.message.from.id }}', 'start')\nON CONFLICT (telegram_id) DO NOTHING;\n\nWITH telegram_link AS (\n  SELECT shopify_customer_id\n  FROM shopify_customers\n  WHERE telegram_id = '{{ $json.message.from.id }}'\n  LIMIT 1\n),\nsession_state AS (\n  SELECT stage, email, shopify_customer_id AS session_customer_id\n  FROM telegram_auth_sessions\n  WHERE telegram_id = '{{ $json.message.from.id }}'\n  LIMIT 1\n)\nSELECT\n  COALESCE((\n    SELECT shopify_customer_id FROM telegram_link\n  ), NULL) AS shopify_customer_id,\n  EXISTS(\n    SELECT 1 FROM telegram_link\n  ) AS is_linked,\n  COALESCE((\n    SELECT stage FROM session_state\n  ), 'start') AS stage,\n  (\n    SELECT email FROM session_state\n  ) AS email,\n  (\n    SELECT session_customer_id FROM session_state\n  ) AS session_customer_id;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -6992,
+        368
+      ],
+      "id": "b6971406-4116-439d-ab43-f868ba3d4edf",
+      "name": "Check Telegram Auth",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c38bb1d9-1270-43f7-83ad-52678996582f",
+              "leftValue": "={{ $json.is_linked }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -6784,
+        368
+      ],
+      "id": "f11b1b4e-3a3b-4b51-84de-13f9193277c6",
+      "name": "Authenticated?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  COALESCE((\n    SELECT shopify_customer_id\n    FROM shopify_customers\n    WHERE LOWER(email) = LOWER('{{ $('Telegram Trigger').first().json.message.text }}')\n    LIMIT 1\n  ), NULL) AS shopify_customer_id,\n  COALESCE((\n    SELECT email\n    FROM shopify_customers\n    WHERE LOWER(email) = LOWER('{{ $('Telegram Trigger').first().json.message.text }}')\n    LIMIT 1\n  ), NULL) AS email;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -5712,
+        1792
+      ],
+      "id": "2757d9ff-9f9f-481d-8131-4b3b4bbe9984",
+      "name": "Find Customer by Email",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.stage }}",
+                    "rightValue": "start",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1b1e9fdc-257d-4be5-98d8-aaf040808a8e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Start"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ba09eb01-ae61-48b2-ba3e-9cb9974a8a9b",
+                    "leftValue": "={{ $json.stage }}",
+                    "rightValue": "awaiting_email",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Awaiting Email"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f1e22a1a-b717-4bb5-a7e9-3bfc392606d7",
+                    "leftValue": "={{ $json.stage }}",
+                    "rightValue": "awaiting_otp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Awaiting OTP"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d1a47e99-1de4-4cd4-a608-35a65c7da9f8",
+                    "leftValue": "={{ $json.stage }}",
+                    "rightValue": "verified",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Verified"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -6320,
+        896
+      ],
+      "id": "c3f83589-cc94-4f62-bfe1-a46412401700",
+      "name": "Check Interaction Stage"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE telegram_auth_sessions\nSET stage = 'awaiting_email'\nWHERE telegram_id = '{{ $('Telegram Trigger').first().json.message.from.id }}';\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -5712,
+        1072
+      ],
+      "id": "667a2725-4ae7-4922-a1eb-33d72b6d2e29",
+      "name": "Update Telegram Auth Session - Awaiting Email",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "text": "Hi there 👋  \nPlease enter the email address associated with your Shopify account so I can verify your identity.\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -5712,
+        880
+      ],
+      "id": "3a76735b-38d3-4a09-bf20-41972d10daf2",
+      "name": "Ask for Email",
+      "webhookId": "c5568731-ca3c-4a66-a090-67db50b9a8da",
+      "credentials": {
+        "telegramApi": {
+          "id": "z7xqIbWEsIroCNwm",
+          "name": "Uche AI_CSA Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// // Loop over input items and add a new field called 'myNewField' to the JSON of each one\n// for (const item of $input.all()) {\n//   item.json.myNewField = 1;\n// }\n\n// return $input.all();\n\n\nconst otp = Math.floor(100000 + Math.random() * 900000).toString();\nconst expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();\n\nreturn [\n  {\n    json: {\n      otp,\n      expiresAt,\n      email: $input.first().json.email,\n      shopify_customer_id: $input.first().json.shopify_customer_id,\n      telegram_id: $('Telegram Trigger').first().json.message.from.id\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4864,
+        1696
+      ],
+      "id": "bba5900e-a3ec-469f-bca9-f47650e69a90",
+      "name": "Generate OTP"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO shopify_otp_verifications (\n  shopify_customer_id,\n  telegram_id,\n  otp,\n  expires_at\n)\nVALUES (\n  '{{ $json.shopify_customer_id }}',\n  '{{ $json.telegram_id }}',\n  '{{ $json.otp }}',\n  '{{ $json.expiresAt }}'\n);\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -4640,
+        1696
+      ],
+      "id": "08c34909-248a-4fad-b27b-5d66c21d928a",
+      "name": "Store OTP",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Generate OTP').item.json.email }}",
+        "subject": "Your Verification Code",
+        "message": "=Your verification code is: {{ $('Generate OTP').item.json.otp }}\nIt expires in 5 minutes.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -4416,
+        1504
+      ],
+      "id": "0253699b-869f-49b3-ac19-0ad0b044bd64",
+      "name": "Send OTP",
+      "webhookId": "3d5d1160-dc81-4d50-9115-2bb6a0a00658",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E6tZSl3afw1qUsqb",
+          "name": "Uche's Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE telegram_auth_sessions\nSET\n  stage = 'awaiting_otp',\n  email = '{{ $('Generate OTP').item.json.email }}',\n  shopify_customer_id = '{{ $('Generate OTP').item.json.shopify_customer_id }}'\nWHERE telegram_id = '{{ $('Generate OTP').item.json.telegram_id }}';\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -4416,
+        1696
+      ],
+      "id": "0de08462-9be2-4007-ad9d-56f14a1bf4a1",
+      "name": "Update Telegram Auth Session - Awaiting OTP",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Generate OTP').item.json.telegram_id }}",
+        "text": "=I’ve sent a 6-digit code to your email.  \nPlease reply with that code to verify your account.\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -4416,
+        1888
+      ],
+      "id": "509aad9b-046f-4f71-aefc-c581966ed3e2",
+      "name": "Ask to Reply with OTP",
+      "webhookId": "169f55fd-e546-44d0-ad1c-e0fd5da7c4ab",
+      "credentials": {
+        "telegramApi": {
+          "id": "z7xqIbWEsIroCNwm",
+          "name": "Uche AI_CSA Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.from.id }}",
+        "text": "=I couldn't find that email in our records.  \nPlease check and try again with the email linked to your Shopify account.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -4864,
+        1888
+      ],
+      "id": "a0ffe8be-93e6-4f5d-857b-becdfb2efb95",
+      "name": "Ask to Retry",
+      "webhookId": "169f55fd-e546-44d0-ad1c-e0fd5da7c4ab",
+      "credentials": {
+        "telegramApi": {
+          "id": "z7xqIbWEsIroCNwm",
+          "name": "Uche AI_CSA Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6e15ea1e-d8a1-43b7-b6c5-0912721f1cb0",
+              "leftValue": "={{ $json.shopify_customer_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -5088,
+        1792
+      ],
+      "id": "5b568dd7-805d-4418-8999-39e77ab15339",
+      "name": "Match Found?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  EXISTS(\n    SELECT 1\n    FROM shopify_otp_verifications\n    WHERE telegram_id = '{{ $('Telegram Trigger').first().json.message.from.id }}'\n      AND otp = '{{ $('Telegram Trigger').first().json.message.text }}'\n      AND used = false\n      AND expires_at > NOW()\n  ) AS otp_valid,\n  (\n    SELECT shopify_customer_id\n    FROM shopify_otp_verifications\n    WHERE telegram_id = '{{ $('Telegram Trigger').first().json.message.from.id }}'\n      AND otp = '{{ $('Telegram Trigger').first().json.message.text }}'\n      AND used = false\n      AND expires_at > NOW()\n    LIMIT 1\n  ) AS shopify_customer_id;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -5712,
+        1264
+      ],
+      "id": "487c9df7-be30-4b25-87e7-7a7e96a9309a",
+      "name": "Verify OTP",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e73e021c-c70b-4a74-a9f9-740a0097ab3e",
+              "leftValue": "={{ $json.otp_valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -5088,
+        1264
+      ],
+      "id": "f4fcbbe6-00d8-4146-a5db-10fa8fb314ae",
+      "name": "Valid OTP?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE shopify_customers\nSET telegram_id = '{{ $('Telegram Trigger').first().json.message.from.id }}'\nWHERE shopify_customer_id = '{{ $json.shopify_customer_id }}'\nRETURNING shopify_customer_id, telegram_id;\n\n\nUPDATE shopify_otp_verifications\nSET used = true\nWHERE telegram_id = '{{ $('Telegram Trigger').first().json.message.from.id }}'\n  AND otp = '{{ $('Telegram Trigger').first().json.message.text }}';\n\n\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -4864,
+        736
+      ],
+      "id": "c312e69d-73e8-4406-82ba-db366df85289",
+      "name": "Update Shopify Customer Table with Telegram ID",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE telegram_auth_sessions\nSET stage = 'verified'\nWHERE telegram_id = '{{ $('Telegram Trigger').first().json.message.from.id }}';\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -4864,
+        928
+      ],
+      "id": "469d9d21-1d75-461e-b60e-b268f842afd1",
+      "name": "Update Telegram Auth Session - Verified",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.from.id }}",
+        "text": "=✅ Verified successfully!  \nYou’re now linked to your Shopify account.  \nYou can now check orders, file complaints, or get support directly here.\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -4864,
+        1120
+      ],
+      "id": "5b5e0283-e015-4b51-9e39-df559a9c2770",
+      "name": "Send Verification Confirmation",
+      "webhookId": "169f55fd-e546-44d0-ad1c-e0fd5da7c4ab",
+      "credentials": {
+        "telegramApi": {
+          "id": "z7xqIbWEsIroCNwm",
+          "name": "Uche AI_CSA Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.from.id }}",
+        "text": "=That code is invalid or has expired.  \nPlease try again or request a new one.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -4864,
+        1312
+      ],
+      "id": "dd3d4750-a231-4aa0-ae3f-b834d8f75451",
+      "name": "OTP Invalid/Expired",
+      "webhookId": "169f55fd-e546-44d0-ad1c-e0fd5da7c4ab",
+      "credentials": {
+        "telegramApi": {
+          "id": "z7xqIbWEsIroCNwm",
+          "name": "Uche AI_CSA Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE telegram_auth_sessions\nSET stage = 'awaiting_email'\nWHERE telegram_id = '{{ $('Telegram Trigger').first().json.message.from.id }}';\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -4864,
+        1504
+      ],
+      "id": "2730bce8-7910-41d7-a839-0dab31024ff1",
+      "name": "Update Telegram Auth Session - Awaiting Email1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  COALESCE(shopify_customer_id, 'NOT_FOUND') AS shopify_customer_id,\n  first_name,\n  last_name,\n  email\nFROM shopify_customers\nWHERE telegram_id = '{{ $('Telegram Trigger').first().json.message.from.id }}'\nLIMIT 1;\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -5376,
+        416
+      ],
+      "id": "6f020f2d-fd59-444a-a885-ec3aeb1c4644",
+      "name": "Get Shopify Customer ID",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Lists multiple customer orders",
+        "method": "POST",
+        "url": "=https://danshika.myshopify.com/admin/api/2025-10/graphql.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "shopifyAccessTokenApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=query { orders(first: 10) { edges { cursor node { id } } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } } }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -5232,
+        400
+      ],
+      "id": "2623bc92-e8a1-437f-9e4f-a6c3779144cc",
+      "name": "Get Multiple Customer Orders",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "vzDIIUgGlMiKS8MF",
+          "name": "Uche Danshika Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Retrieves details of a specific order of a customer identified by shopify_customer_id as retrieved from the get_shopify_customer_id tool",
+        "method": "POST",
+        "url": "https://danshika.myshopify.com/admin/api/2025-10/graphql.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "shopifyAccessTokenApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=query { customer(id: \"gid://shopify/Customer/{{ $fromAI('shopify_customer_id', `id of the customer on shopify`, 'number') }}\") { id firstName lastName email phone numberOfOrders amountSpent { amount currencyCode } createdAt updatedAt note verifiedEmail validEmailAddress tags lifetimeDuration defaultAddress { formattedArea address1 } addresses { address1 } image { src } canDelete } }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -5088,
+        400
+      ],
+      "id": "30f9efa5-87f6-4fa3-bdfe-9194fc1fc129",
+      "name": "Get Customer Order Details",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "vzDIIUgGlMiKS8MF",
+          "name": "Uche Danshika Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "operation": "get",
+        "orderId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_ID', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.shopifyTool",
+      "typeVersion": 1,
+      "position": [
+        -4864,
+        304
+      ],
+      "id": "e4c55167-94ff-4113-8f96-548f4b73ebe3",
+      "name": "Get Order",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "vzDIIUgGlMiKS8MF",
+          "name": "Uche Danshika Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Creates a ticket in Zendesk using the customer's email, first_name, last_name retrieved from the Get Shopify Customer ID, as well as the subject of the customer's issue and full description of the issue.",
+        "method": "POST",
+        "url": "https://gadahuhelp.zendesk.com/api/v2/tickets.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "zendeskApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"ticket\": {\n    \"subject\": \"{{ $fromAI('subject', 'the subject of the customer issue', 'string') }}\",\n    \"comment\": {\n      \"body\": \"{{ $fromAI('issue', 'full description of customer issue as a single line of text (no line breaks)', 'string') }}\"\n    },\n    \"requester\": {\n      \"name\": \"{{ $fromAI('name', 'first name and last name of the customer', 'string') }}\",\n      \"email\": \"{{ $fromAI('email', 'email of the customer', 'string') }}\"\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -5600,
+        416
+      ],
+      "id": "8ec89f18-5abc-4245-a6f9-357039173c30",
+      "name": "Create Zendesk Ticket",
+      "credentials": {
+        "zendeskApi": {
+          "id": "K6lkt2r5FgD9MneP",
+          "name": "Uche Gadahu Zendesk API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Ticket_ID', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.zendeskTool",
+      "typeVersion": 1,
+      "position": [
+        -5488,
+        432
+      ],
+      "id": "c95caa79-4010-494c-8299-fccbb7e4f1ad",
+      "name": "Check Ticket Status",
+      "credentials": {
+        "zendeskApi": {
+          "id": "K6lkt2r5FgD9MneP",
+          "name": "Uche Gadahu Zendesk API Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "product",
+        "operation": "getAll",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.shopifyTool",
+      "typeVersion": 1,
+      "position": [
+        -4960,
+        384
+      ],
+      "id": "18d0befa-2147-4acb-bf4a-44926e6c1110",
+      "name": "Get Products",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "vzDIIUgGlMiKS8MF",
+          "name": "Uche Danshika Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## User Authentication Flow \nNew user logs in using the [Telegram bot](https://t.me/ai_csa_bot)\nUser gets authenticates via OTP sent to their Shopify customer email address, supported by Supabase - `shopify_customers`, `telegram_auth_sessions`, and `shopify_otp_verifications` tables.",
+        "height": 1520,
+        "width": 2448
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -6624,
+        720
+      ],
+      "typeVersion": 1,
+      "id": "12bdb1d5-6681-46b3-bf92-29a74de12ac6",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Customer Service Representative Agent Team\n* Orchestrator Agent is the customer-facing agent that routes to other subagents or handles general conversations\n* FAQ Agent uses hybrid search-powered RAG via Supabase\n* Escalation Agent create tickets for customers in Zendesk\n* Shopify Agent connects to Shopify APIs to retrieve product, order information. \nCurrently limited to products and specific orders as the Shopify store used is in development mode.\nOn a real/live Shopify store, additional tools can be added to retrieve specific customer PII data from the store.",
+        "height": 816,
+        "width": 1648
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -6368,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "3c47443a-b2aa-4b40-93c2-41fb421b4390",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-development-store.myshopify.com/admin/api/2025-10/graphql.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Shopify-Access-Token",
+              "value": "{access_token}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "query suggestedRefund { order(id: \"gid://shopify/Order/469306983\") { suggestedRefund(refundDuties: [{dutyId: \"gid://shopify/Duty/1064114503\", refundType: FULL}]) { refundDuties { amountSet { shopMoney { amount currencyCode } } originalDuty { id } } totalDutiesSet { shopMoney { amount currencyCode } } } } }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -4960,
+        512
+      ],
+      "id": "22f69eac-2ae2-4ea2-a868-d9ac0cd67b38",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://danshika.myshopify.com/admin/api/2025-10/graphql.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "shopifyAccessTokenApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=query { order(id: \"gid://shopify/Order/6193731502292\") { id name totalPriceSet { presentmentMoney { amount } } lineItems(first: 10) { nodes { id name } } } }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4672,
+        496
+      ],
+      "id": "bfddb332-cb20-4fec-afb8-515448f144bd",
+      "name": "HTTP Request1",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "vzDIIUgGlMiKS8MF",
+          "name": "Uche Danshika Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://danshika.myshopify.com/admin/api/2025-10/graphql.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "shopifyAccessTokenApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "query { orders(first: 10) { edges { cursor node { id } } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } } }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4560,
+        592
+      ],
+      "id": "5f98bcb5-b646-4f35-bcaa-3c2cf7662a45",
+      "name": "Get Store Orders",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "vzDIIUgGlMiKS8MF",
+          "name": "Uche Danshika Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "operation": "getAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.shopify",
+      "typeVersion": 1,
+      "position": [
+        -4656,
+        304
+      ],
+      "id": "be7efaa3-11c3-4d57-a9d6-dfc8ce6c76ca",
+      "name": "Get many orders",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "vzDIIUgGlMiKS8MF",
+          "name": "Uche Danshika Shopify Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "divverse-community.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (compatible; Google-Apps-Script; beanserver; +https://script.google.com; id: UAEmdDd-b8hTDOu4TrsM0bk247508OIoxWA)",
+            "content-length": "271",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "107.178.192.33",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9887b6a4146fe62f-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "107.178.192.33, 172.71.190.138",
+            "x-forwarded-host": "divverse-community.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-45-5cf4858c8f-tn64s",
+            "x-is-trusted": "yes",
+            "x-real-ip": "107.178.192.33"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "1nyF8wVCEgcurAEKKeZNyzYYAkBTGDHON",
+            "name": "AI Customer Service Representative Automation Sample FAQ  — Comprehensive Policies & Support Guide.pdf",
+            "path": "/AI Customer Service Rep n8n Automation",
+            "mimeType": "application/pdf",
+            "updated": "2025-09-30T14:40:06.000Z"
+          },
+          "webhookUrl": "https://divverse-community.app.n8n.cloud/webhook/ai-csr-knowledgebase-new-drive-file",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 836768667,
+          "message": {
+            "message_id": 340,
+            "from": {
+              "id": 1834131346,
+              "is_bot": false,
+              "first_name": "Uche",
+              "last_name": "Madu",
+              "username": "dreemer6",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 1834131346,
+              "first_name": "Uche",
+              "last_name": "Madu",
+              "username": "dreemer6",
+              "type": "private"
+            },
+            "date": 1759985680,
+            "text": "go ahead"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "FAQ Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Shopify Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Escalation Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "FAQ Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Shopify Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Escalation Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File From Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old Documents": {
+      "main": [
+        [
+          {
+            "node": "Limit to One File (Avoid Repetition)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit to One File (Avoid Repetition)": {
+      "main": [
+        [
+          {
+            "node": "Download File From Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Metadata": {
+      "main": [
+        [
+          {
+            "node": "Delete Old Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Create Vector Embeddings",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "FAQ Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shopify Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Telegram Auth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrator Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Telegram Auth": {
+      "main": [
+        [
+          {
+            "node": "Authenticated?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticated?": {
+      "main": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Interaction Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Interaction Stage": {
+      "main": [
+        [
+          {
+            "node": "Ask for Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Telegram Auth Session - Awaiting Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Find Customer by Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Verify OTP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Customer by Email": {
+      "main": [
+        [
+          {
+            "node": "Match Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate OTP": {
+      "main": [
+        [
+          {
+            "node": "Store OTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store OTP": {
+      "main": [
+        [
+          {
+            "node": "Send OTP",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Telegram Auth Session - Awaiting OTP",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Ask to Reply with OTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Found?": {
+      "main": [
+        [
+          {
+            "node": "Generate OTP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ask to Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify OTP": {
+      "main": [
+        [
+          {
+            "node": "Valid OTP?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid OTP?": {
+      "main": [
+        [
+          {
+            "node": "Update Shopify Customer Table with Telegram ID",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Telegram Auth Session - Verified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Verification Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OTP Invalid/Expired",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Telegram Auth Session - Awaiting Email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Shopify Customer ID": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Escalation Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Multiple Customer Orders": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Customer Order Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Order": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Zendesk Ticket": {
+      "ai_tool": [
+        [
+          {
+            "node": "Escalation Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Ticket Status": {
+      "ai_tool": [
+        [
+          {
+            "node": "Escalation Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Products": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "c8f08ba4-bb73-45fd-bc00-9c0ab1a5c381",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "uSspLi1ELNV1d3Dt",
+  "tags": []
+}

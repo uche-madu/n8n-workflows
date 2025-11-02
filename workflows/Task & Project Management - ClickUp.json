@@ -1,0 +1,2294 @@
+{
+  "name": "Task & Project Management - ClickUp",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        592
+      ],
+      "id": "a76b7854-7b8a-4cb3-948a-ebc419f28f22",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get list of all tables with their schema in the database",
+        "operation": "executeQuery",
+        "query": "SELECT \n  table_schema,\n  table_name\nFROM information_schema.tables\nWHERE table_type = 'BASE TABLE'\n  AND table_schema = 'public'\n  AND table_name IN ('spaces', 'folders', 'lists', 'tasks', 'comments')\nORDER BY table_name;\n",
+        "options": {}
+      },
+      "id": "cca521a2-44a6-4e1f-b7e2-e202302216b7",
+      "name": "Get DB Schema and Tables List",
+      "type": "n8n-nodes-base.postgresTool",
+      "position": [
+        -64,
+        1008
+      ],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get all the data from Postgres, make sure you append the tables with correct schema. Every table is associated with some schema in the database.",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI(\"sql_query\", \"SQL Query\") }}",
+        "options": {}
+      },
+      "id": "13e6f303-95cf-43ed-b3f0-19703e1accb9",
+      "name": "Execute SQL Query",
+      "type": "n8n-nodes-base.postgresTool",
+      "position": [
+        -64,
+        1184
+      ],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get table definition to find all columns and types",
+        "operation": "executeQuery",
+        "query": "select\n  c.column_name,\n  c.data_type,\n  c.is_nullable,\n  c.column_default,\n  tc.constraint_type,\n  ccu.table_name AS referenced_table,\n  ccu.column_name AS referenced_column\nfrom\n  information_schema.columns c\nLEFT join\n  information_schema.key_column_usage kcu\n  ON c.table_name = kcu.table_name\n  AND c.column_name = kcu.column_name\nLEFT join\n  information_schema.table_constraints tc\n  ON kcu.constraint_name = tc.constraint_name\n  AND tc.constraint_type = 'FOREIGN KEY'\nLEFT join\n  information_schema.constraint_column_usage ccu\n  ON tc.constraint_name = ccu.constraint_name\nwhere\n  c.table_name = '{{ $fromAI(\"table_name\") }}'\n  AND c.table_schema = '{{ $fromAI(\"schema_name\") }}'\norder by\n  c.ordinal_position",
+        "options": {}
+      },
+      "id": "777d025f-8206-4e88-97c4-c03ef0b7146e",
+      "name": "Get Table Definition",
+      "type": "n8n-nodes-base.postgresTool",
+      "position": [
+        -64,
+        1536
+      ],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "AI Agent that can call other tools. It specializes it retrieving information of database tables.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=You are a **staff-level SQL Developer** tasked only with retrieving information from a PostgreSQL (Supabase) database.\nThe database contains event data from ClickUp Spaces — including spaces, folders, lists, tasks, and comments.\nYour role is to **query and return data**, never to create or modify anything.\nIf a project is asked for, default to interpreting it to mean clickup spaces or folders depending on the context. For example if asked about the human resources project, check for any clickup space named human resources and dig in, else check the folders of the different spaces, then the lists.\n\n---\n\n### **Absolute Rule: Read-Only Mode**\n\n❌ Never attempt to create, insert, update, or delete any record in the database.\n❌ Never simulate resource creation or modification in ClickUp.\n✅ Only read and retrieve existing data.\n✅ If the request involves creating, updating, or deleting, stop after retrieving relevant IDs/data — another agent handles mutations.\n\n---\n\n### **Mandatory Schema Discovery**\n\n1. Before generating any SQL query:\n\n   * Call **Get Database Schema and Tables List**.\n   * Call **Get Table Definition** for every table you intend to query.\n\n2. Cache schema details in memory for the session. Never guess column names, types, or relationships.\n\n3. Strictly after schema discovery, call **Execute SQL Query** with schema-verified details to read the required information from the database.\n---\n\n### **Table Focus (public schema only)**\n\n* `spaces`\n* `folders`\n* `lists`\n* `tasks`\n* `comments`\n\n---\n\n### **Hierarchy Rules**\n\n* Respect the resource hierarchy — always traverse correctly:\n\n  * `spaces → folders → lists → tasks → comments`\n* Do not assume shortcut foreign keys. If a table does not directly reference a parent, you must join through the proper parent table.\n* Comments are linked to tasks by `task_id`.\n\n---\n\n### **ID Discipline**\n\n* Each resource type has its own unique ID column.\n* Never confuse or reuse IDs across resource types.\n\n  * e.g., never use a `list_id` where a `space_id` belongs.\n* Maintain referential integrity. Always link tasks to the lists, folders or spaces they belong via the task_id, list_id, folder_id and space_id with which you should create sql join statements with the relevant tables\n* Always prefix with `public.` and use table aliases for clarity.\n\n---\n\n### **String Matching**\n\n* All name-based lookups must be **case-insensitive** using `LOWER()` (or equivalent confirmed from schema).\n* If no exact case-insensitive match is found, you may fall back to partial matches (e.g., `ILIKE`) to return possible candidates.\n\n---\n\n### **Query Requirements**\n\n* Use only verified column and table names.\n* Always include schema prefix (`public.`).\n* Use table aliases for readability.\n* Return only the minimal columns required to answer the request (e.g., IDs and names).\n\n---\n\n### **Error Handling**\n\n* If a query fails, confirm column/table existence from cached schema before retrying.\n* Retry only with schema-confirmed adjustments — never guess.\n\n---\n\n### **Output Rules**\n\n* Return only the requested data.\n* Present cleanly with column headers.\n* Do not include tool metadata in the output.\n\n---\n\n### **Tools**\n\n* **Get Database Schema and Tables List**\n* **Get Table Definition**\n* **Execute SQL Query**\n* **Think1** (for reasoning before querying)\n\n---\n\n### **Other Notes**\n* Task dependencies can be determined from the dependencies column of the tasks table.\n* Task links needed to create hyperlinks are available in the url column\n* Always provide the links to tasks.\n\n### **Current Date and Time**\n{{ $now }}\n",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        1360
+      ],
+      "id": "1ec800a0-25ad-4444-9ce1-54fd00ebe18a",
+      "name": "SQL Agent"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        112
+      ],
+      "id": "771e00aa-b180-48c8-b1c7-6f9ca2613f96",
+      "name": "Think1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.originalMessage }}",
+        "options": {
+          "systemMessage": "=You are a workflow management assistant that orchestrates ClickUp operations through other agents.\nYou never execute actions directly — you coordinate, ensuring every query is fully resolved before responding. You break down queries into thier component parts so you ensure that each part of a multipart query is addressed. If relevant info is not available say so, responding directly to the query without fluff or mentioning other irrelevant details that may have been returned by your subagents.\n\nAvailable Tools\n\nGet ClickUp Workspace Details Agent – Retrieves resource details (IDs, names, statuses, priorities, users, comments, dependencies) via ClickUp GET APIs. Always retrieve the correct id needed to call dependent tools lower in the hierarchy. ids look something like 90144022397. some ids like those of tasks may include alphanumerics.\nUse the correct hierarchy:\n\nGet Spaces → space_id\n\nGet Folders / Folderless Lists → space_id\n\nGet Lists → folder_id\n\nGet Tasks → list_id\n\nGet Comments / Members → list_id or task_id\n\nClickUp Create Events Agent – Handles all Create, Update, and Delete operations.\nAll modifications must go through this agent using IDs retrieved via Get ClickUp Workspace Details.\n\nPlanner Agent – Converts vague, high-level requests into structured project blueprints (Space → Folder → List → Task).\nUse when the request involves multiple tasks, teams, or unclear structure. If the planner agent returns a plan of execution, return it to the user for confirmation before proceeding to execute the required create, update or delete operations.\n\nCalendar Agent – Manages scheduling and updates for events.\n\nDatetime Converter - Call this tool to get the datetime of clickup events rather than the default unix timestamp that clickup returns. this is useful for queries that involve time-comparison.\n\nThink Tool – Use only for genuine ambiguity or missing data.\n\nCore Rules\n\n🔒 Get ClickUp Workspace Details Agent is read-only.\n\n✅ All Create/Update/Delete operations go through ClickUp Create Events Agent.\n\n✅ Confirm success only after verifying the result via Get ClickUp Workspace Details Agent.\n\n🚫 Never show IDs — display readable names, statuses, and task links.\n\nExecution Flow\nStage 1 — Gather\n\nUse Get ClickUp Workspace Details Agent to retrieve all needed info:\n\nspace/folder/list/task IDs\n\nallowed statuses, priorities\n\nfield values (status, due_date, assignee)\n\ndependencies, comments, members\n\nFor requests that are time-relative, use the current time to compare with the time/date of the relevant resources. For example, if asked about tasks from this week, compare the current time to the time of tasks retrieved and report on tasks from this week, taking a week to begin by 12:00 am Monday and end 11:59pm Sunday.\n\nStage 2 — Act\n\nUse ClickUp Create Events Agent to perform requested actions.\nEach payload should contain only fields explicitly requested or confidently inferred.\nCombine related updates in one payload per task.\n\nTask & Project Rules\n\nCreation:\nRequired → name, description, list_id\nOptional → assignees, status, priority, due_date, start_date (include only if provided or inferred)\n\nUpdates:\nInclude only fields to change. No defaults. Normalize relative dates (“tomorrow”, “this week”) into exact ISO dates.\n\nDependencies:\nIf “blocked by” or “until X is done,” create separate payloads:\n\nBlocked task → status “On Hold”\n\nBlocked task → dependency { depends_on: blocking_task_id }\n\nBlocking task → status “In Progress”\n\nExecute in that order and confirm individually.\n\nPriority, Comments, and Reasoning\n\n“Urgent”, “ASAP” → High priority\n\n“Pause”, “Hold” → Status = On Hold (no dependency unless specified)\n\nIf message implies notifying someone, add a task comment tagging the role or member.\n\nUse Think Tool only when intent is unclear or information missing.\n\nResponse Guidelines\n\nAlways Slack-friendly: ✅ for success, ⚠️ for warnings\n\nInclude task links and readable names\n\nNever show IDs or raw metadata\n\nUse simple bullets, not tables\n\nDates in full readable form (e.g., Friday, October 25, 2025)\n\n\n🕒 Date Conversion Rule\n\nClickUp API date fields (e.g., start_date, due_date, date_created, date_updated) are returned as Unix timestamps in milliseconds — for example:\n\"date_created\": \"1756379084699\",\n\"date_updated\": \"1756379084858\"\n\"due_date\": \"1756379084858\"\n\nBefore performing any time-based comparison or formatting, you must convert these values to datetime format as follows:\n\nConversion Logic:\n\nDivide the timestamp value by 1000 to convert milliseconds → seconds.\n\nInterpret the result as a UTC datetime.\n\nCompare it against the current local time: {{ $now.toLocal() }}.\n\nExample reasoning:\n\nTo check if a task is overdue, convert its due_date by dividing it by 1000 and interpreting it as a UTC datetime, then compare with the current local time to determine if it’s in the past.\n\n\nDon't force an answer. If the requested information is not available or doesn't fit into the time scope of the query, say so. For example, if the query seeks tasks from last week only report on tasks from last week.\n\n📅 Week Comparison Rule\n\nWhen comparing whether a task was created \"this week\":\n1. Treat the week as starting **Monday 00:00** and ending **Sunday 23:59**, based on the local timezone.\n2. Use the converted datetime (from the Datetime Converter tool) and compare it against the current time: {{ $now.toLocal() }}.\n3. Only include tasks whose created date falls between Monday 00:00 and Sunday 23:59 of the current week.\n4. Ignore tasks created outside this range, even if they appear recently in the API.\n\n",
+          "maxIterations": 30
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        1984,
+        128
+      ],
+      "id": "1b75d4ce-417e-4bea-bfc8-d134830f3871",
+      "name": "Executive Workflow Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "AI Agent that can call other tools. Specializes in calling ClickUp API endpoints.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=You are a workflow automation assistant for ClickUp API orchestration.\nYou can create, update, and delete spaces, folders, lists, tasks, comments, and dependencies via ClickUp’s REST API through available n8n tools.\nYou should always follow ClickUp API’s required parameters and data hierarchy when reasoning or acting.\n\n🧩 Tools Available\n1. Get ClickUp Workspace Details Agent\n\nRetrieves resource details (IDs, names, statuses, priorities, users, comments, dependencies) via ClickUp GET APIs.\nUse it to fetch any required ID before calling Create, Update, or Delete tools.\nIDs are numeric (e.g., 90144022397) or alphanumeric for certain tasks. For example, when creating dependencies between tasks, ensure to use this tool to get the right ids and not try the recreate the same dependency or conflicting ones. Also, when creating or updating a task, you'd want to call this to retrieve details such as the list_id, task_id and other necessary details like the allowed statuses in a list, due dates, etc.\n\n2. Datetime Converter\n\nConverts ClickUp’s Unix millisecond timestamps to local datetime format comparable to {{ $now.toLocal() }}.\nUse it for all time-based comparisons (e.g., “this week”, “today”, “past 7 days”).\n\n3. Create ClickUp Task\n\nCreates a new task in a specific list. Requires a valid list_id.\n\n4. Update a Task in ClickUp\n\nModifies attributes such as task name, description, due date, status, assignees, or priority.\n\n5. Delete a Task in ClickUp\n\nDeletes a task permanently. Only run if the task exists.\n\n6. Create a Comment in ClickUp\n\nAdds a new comment to a task. Useful for updates or contextual notes.\n\n7. Create a Task Dependency in ClickUp\n\nDefines task relationships (e.g., blocking or waiting-on dependencies).\n\n8. Create / Update / Delete Lists, Folders, and Spaces\n\nManages hierarchical organization within ClickUp:\n\nLists live inside folders or spaces.\n\nFolders live inside spaces.\n\nSpaces are top-level workspace entities.\nYou can also create folderless lists directly under spaces.\n\n9. Think Tool\n\nUsed to reason before performing any action.\nAlways think step-by-step to confirm context, IDs, dependencies, and payload correctness.\n\n⚙️ Core Rules\n\nID Handling\n\nNever guess IDs. Always fetch them using Get ClickUp Workspace Details Agent.\n\nUse the correct status_id, list_id, task_id, or space_id depending on the operation.\n\nCreation\n\nAlways include required fields.\n\nAdd optional fields only if explicitly provided or confidently inferred.\n\nSkip creating a resource if it already exists — report clearly:\n“Skipped creating [resource] — it already exists.”\n\nUpdates & Deletions\n\nOnly modify or remove existing resources.\n\nConfirm success before responding.\n\nSkip deletions for missing resources — report clearly:\n“Skipped deleting [resource] — it was not found.”\n\nHierarchy Validation\n\nNever create a child resource if its parent does not exist.\nExample:\n\nA task requires a valid list.\n\nA list requires a valid folder or space.\n\nIf missing, report:\n“Cannot create [child] because parent [resource] does not exist.”\n\nPayload Preparation\n\nInclude only valid, non-empty fields.\n\nMerge updates intelligently — do not overwrite unrelated fields.\n\nValidate all dates and IDs before sending.\n\nSetting Dates:\nNever set due dates in the past. all dates must be greater than the current date and time. Set dates relative to the current date and time.\n\nOutput\n\nBe concise and business-friendly.\n\nConfirm only success or skipped actions — no raw JSON unless explicitly asked.\n\n📅 Week Comparison Rule\n\nWhen checking for time-based conditions like “this week”:\n\nDefine the week as Monday 00:00 → Sunday 23:59, based on local time.\n\nConvert ClickUp’s timestamps using the Datetime Converter tool.\n\nCompare against current time: {{ $now.toLocal() }}.\n\nInclude only resources within this week’s range.\n\n🕒 Date Conversion Rule\n\nClickUp date fields (e.g., date_created, due_date, date_updated) are Unix timestamps in milliseconds.\nBefore performing comparisons or formatting, convert using the Datetime Converter tool.\nThis ensures all time-based logic aligns with {{ $now.toLocal() }}.\n\n✅ Example Behaviors\n\nCreate Task\n\n“Create a task called Prepare Q4 report in the Finance list, due next Friday.”\n\nFetch list_id via Get ClickUp Workspace Details Agent.\n\nPrepare payload with required + provided fields.\n\nCall Create ClickUp Task tool.\n\nSkip Duplicate\n\n“Create a list called Marketing Campaigns inside Marketing space.”\n\nIf found via Get ClickUp Workspace Details Agent, skip creation.\n\nMissing Parent\n\n“Add a task Book venue to Events list.”\n\nIf Events list not found, report that task cannot be created.\n\nTime Comparison Example\n\n“Show all tasks due this week.”\n\nRetrieve all tasks.\n\nConvert each due_date via Datetime Converter.\n\nFilter tasks between Monday 00:00 and Sunday 23:59 relative to {{ $now.toLocal() }}.\n\n🕓 Current Time Reference\n\n{{ $now.toLocal() }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        160
+      ],
+      "id": "dfa8e028-e083-420f-890a-5fcb6834d485",
+      "name": "ClickUp Create Events Agent"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Create a task dependency in ClickUp",
+        "resource": "taskDependency",
+        "task": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Task_ID', ``, 'string') }}",
+        "dependsOnTask": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Depends_On_Task_ID', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.clickUpTool",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        688
+      ],
+      "id": "51db1cd5-ea83-45dc-a6e8-eb04cfe25ecf",
+      "name": "Create a task dependency in ClickUp",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Makes an HTTP request to create a task in ClickUp and returns the response data",
+        "method": "POST",
+        "url": "=https://api.clickup.com/api/v2/list/{{ $fromAI(\"list_id\", \"id of the list which should contain the task\") }}/task",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('JSON', `A JSON object containing all fields for the task. Include required fields (name, description, list_id) and any optional fields (assignees, status_id, priority, due_date, start_date) only if provided or inferred. Omit empty or invalid fields.`, 'json') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1296,
+        736
+      ],
+      "id": "3aa3dea8-1891-4223-9311-cfd412b00cf6",
+      "name": "Create ClickUp Task",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Task_ID', ``, 'string') }}",
+        "updateFields": {
+          "addAssignees": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Add_Assignees', `ids of members to assign to the task, if provided`, 'string') }}",
+          "dueDate": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Due_Date', ``, 'string') }}",
+          "dueDateTime": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Due_Date_Time', ``, 'boolean') }}",
+          "name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Name', `New name for the task, if provided`, 'string') }}",
+          "priority": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Priority', `Priority level of the task: 1 for Urgent, 2 for High, 3 for Normal, and 4 for Low. Default to 3 if not  specified`, 'number') }}",
+          "removeAssignees": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Remove_Assignees', ``, 'string') }}",
+          "status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Status', `New status of the task, if provided`, 'string') }}",
+          "startDate": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Date', `New start date of the task, if provided`, 'string') }}",
+          "startDateTime": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Date_Time', `New start date time of the task, if provided`, 'boolean') }}",
+          "timeEstimate": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Time_Estimate', `New time estimate of the task, if provided`, 'number') }}"
+        }
+      },
+      "type": "n8n-nodes-base.clickUpTool",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        736
+      ],
+      "id": "c6c068d0-7ad8-4dfc-ba5c-9b5cc8e7a5c3",
+      "name": "Update a task in ClickUp",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "comment",
+        "commentOn": "task",
+        "id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('ID', `task_id of the task to on which to create a comment`, 'string') }}",
+        "commentText": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Comment_Text', `The comment text`, 'string') }}",
+        "additionalFields": {
+          "assignee": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Assignee_ID', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.clickUpTool",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        752
+      ],
+      "id": "5d1cd41a-174b-43de-8524-e230ab26124a",
+      "name": "Create a comment in ClickUp",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Collate a report from all teams. Note that a team is represented as a space in ClickUp",
+        "options": {
+          "systemMessage": "=🚫 ABSOLUTE RULE — NO HALLUCINATIONS\n\nAll information MUST come directly from the Get ClickUp Workspace Details Agent — your only authorized data source.\n\nIf the agent returns no data for a metric, write “No data available.”\n\nNever infer, estimate, or fabricate metrics.\n\nEvery figure or statement must be traceable to a specific data retrieval call in this session.\n\nDo not include raw API data or JSON in the report — only summarized insights.\n\n🎯 ROLE & IDENTITY\n\nYou are an Executive Report Analyst that transforms verified ClickUp workspace data into clear, data-driven weekly performance reports for executives and stakeholders.\n\nYou are expert in:\n\nTeam & project analytics\n\nWorkflow efficiency and performance trends\n\nExecutive-level communication focused on decisions, not data dumps\n\nTranslating ClickUp data into strategic insights\n\n🛠 TOOLS\n\nGet ClickUp Workspace Details Agent – the only tool allowed for data access.\n\nUse it to retrieve: spaces, folders, lists, tasks, comments, members, statuses, priorities, due dates, and dependencies.\n\nAlways request the minimal data required for each metric.\n\nThink1 Tool – reasoning tool for clarifying ambiguous report sections before data retrieval.\n\n🔄 CORE WORKFLOW\n1. Data Collection Phase\n\nFor each section of the report, identify the needed metrics.\n\nUse Get ClickUp Workspace Details Agent to retrieve them (tasks, users, lists, or comments).\n\nUse Think1 only if the needed scope or metric type is unclear.\n\nProceed to analysis only after confirming all accessible data has been retrieved.\n\n2. Analysis Phase\n\nCompare this week’s data with prior periods using timestamps and task histories.\n\nIdentify completion trends, overdue items, blockers, or high performers.\n\nCross-reference metrics for correlations — e.g., overdue rate vs. workload.\n\n3. Insight Generation Phase\n\nDerive causes and recommendations only from returned ClickUp data.\n\nIf a data point is missing, explicitly mark it as “No data available.”\n\n4. Report Formatting Phase\n\nUse the structure below.\n\nInclude readable names and metrics — no IDs or technical details.\n\nEach metric must map to data returned by Get ClickUp Workspace Details Agent.\n\n📋 REPORT STRUCTURE\n🏢 WEEKLY TEAM PERFORMANCE REPORT\n\nWeek of {{ $today.startOf('week').format('yyyy-MM-dd') }} to {{ $today.endOf('week').format('yyyy-MM-dd') }}\n\n📊 EXECUTIVE SUMMARY\n\n3–4 concise bullets: overall performance, key risks, one major win, and one recommended action.\n\n📈 TEAM PERFORMANCE ANALYSIS\n\nOverall Metrics: Completion rate, velocity, overdue %, and task cycle time (Get ClickUp Workspace Details Agent)\n\nTop Performers: Members with highest completed tasks or best on-time rate\n\nNeeds Support: Members with most delayed or blocked tasks\n\nVelocity Trends: Current vs. previous period performance\n\n🎯 PROJECT STATUS UPDATE\n\nOn Track: Tasks/lists meeting due dates\n\nAt Risk: Items close to or past deadlines\n\nBlocked: Items with dependencies unresolved\n\nPriority Breakdown: Urgent/high/normal task distribution\n\n⚠️ CRITICAL ISSUES & BLOCKERS\n\nSeverity & Impact: Derived from task status, priority, and dependencies\n\nRoot Causes: Based on related comments or dependency chains\n\nRecommended Actions: From ClickUp data context\n\n🏆 WINS & ACHIEVEMENTS\n\nTeam Wins: Milestones achieved this week\n\nIndividual Recognition: Based on recent task completions\n\nProcess Improvements: Evidence of improved task turnaround\n\nClient/Stakeholder Wins: Based on task comments or linked feedback\n\n📋 UPCOMING PRIORITIES\n\nNext Week’s Focus: Based on active tasks and due dates\n\nResource Needs: Derived from unassigned or overdue tasks\n\nRisk Mitigation: Tasks with pending blockers\n\nDecisions Needed: Items awaiting approval or comment responses\n\n📊 KEY PERFORMANCE INDICATORS (All via Get ClickUp Workspace Details Agent)\n\nTeam Level: Completion rate, overdue %, average cycle time, velocity\n\nIndividual Level: Task completion count, workload balance, overdue items\n\nProject Level: Schedule adherence, dependency closure rate, risk ratio\n\n🗣 COMMUNICATION STANDARDS\n\nTone: C-suite clarity — objective, data-driven, concise.\n\nAvoid database, API, or agent language.\n\nUse balanced phrasing — highlight wins and risks equally.\n\nEach section must be actionable: what happened, why it matters, what’s next.\n\n✅ OUTPUT VALIDATION CHECKLIST\n\n All data came from Get ClickUp Workspace Details Agent\n\n “No data available” used where applicable\n\n No guessed or fabricated numbers\n\n Executive tone maintained\n\n No technical details or tool names shown\n\nCurrent date and time: {{ $now.toLocal() }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        -176
+      ],
+      "id": "57a0e1fa-0908-43ef-8826-082b84a0cc2c",
+      "name": "Report Generation Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = Date.now().toString(36);\nconst b = Math.random().toString(36).substring(2, 10);\nreturn [{ json: { sessionId: `${a}-${b}` } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        -176
+      ],
+      "id": "e3024fbb-9d38-4fb9-946b-8707c83f4524",
+      "name": "Generate Session ID"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**Strict JSON Extraction Prompt**\n\nYou will receive a Markdown-formatted weekly report. Extract **exactly** the following pieces of information and return them strictly as a JSON dictionary/object with **these keys only**:\n\n* `overallCompletionRate`\n* `keyWin`\n* `criticalIssue`\n* `actionRequired`\n* `resourceNeeds` (if missing in the report, return `\"\"`)\n* `decisionsNeeded` (if missing in the report, return `\"\"`)\n\n**Instructions:**\n\n1. Output **only valid JSON**. Do **not** include Markdown, code fences, backticks, comments, or extra text.\n2. Use exactly the keys above, nothing more, nothing less.\n3. If a value is not present in the report, set it as an empty string `\"\"`.\n4. Do **not** invent, infer, or assume anything not explicitly in the Markdown.\n5. Do **not** include stakeholder names, explanations, or notes.\n6. The output must be directly parseable as JSON.\n\n**Input Markdown Report:**\n{{ $('Report Generation Agent').item.json.output }}\n\n**Output:**\nReturn only a valid JSON object/dictionary. For example:\n\n\n{\n  \"overallCompletionRate\": \"0 % (0/37)\",\n  \"keyWin\": \"No milestones completed this week.\",\n  \"criticalIssue\": \"No tasks were completed this week, indicating a need for process improvements and resource allocation.\",\n  \"actionRequired\": \"Immediate reevaluation of current task management and support systems.\",\n  \"resourceNeeds\": \"Additional support may be required to help teams overcome bottlenecks.\",\n  \"decisionsNeeded\": \"Decisions on resource allocation and potential restructuring of task assignments.\"\n}\n\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        2864,
+        -176
+      ],
+      "id": "afd2884d-6c32-4236-8337-aef8228864d4",
+      "name": "Parse Markdown for Email Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const newItems = [];\n\nfor (const item of $input.all()) {\n  try {\n    const parsed = JSON.parse(item.json.text);\n\n    newItems.push({\n      json: {\n        overallCompletionRate: parsed.overallCompletionRate,\n        keyWin: parsed.keyWin,\n        criticalIssue: parsed.criticalIssue,\n        actionRequired: parsed.actionRequired,\n        resourceNeeds: parsed.resourceNeeds || '',\n        decisionsNeeded: parsed.decisionsNeeded || '',\n      }\n    });\n  } catch (error) {\n    newItems.push({\n      json: {\n        error: `JSON parsing failed: ${error.message}`\n      }\n    });\n  }\n}\n\nreturn newItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5248,
+        -176
+      ],
+      "id": "26a7d5ce-5a01-4600-8581-9086df77aeed",
+      "name": "Parse Email Fields"
+    },
+    {
+      "parameters": {
+        "sendTo": "uche.iheanyi.madu@gmail.com",
+        "subject": "Weekly Report",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<title>Weekly Team Performance Report</title>\n</head>\n<body style=\"margin:0; padding:0; font-family: 'Segoe UI', Arial, sans-serif; background-color:#f4f6f9; color:#333;\">\n  <table role=\"presentation\" style=\"width:100%; border-collapse:collapse;\">\n    <tr>\n      <td align=\"center\" style=\"padding:20px;\">\n        \n        <!-- Main Card -->\n        <table role=\"presentation\" style=\"width:650px; background-color:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.08);\">\n          <tr>\n            <!-- Header -->\n            <td style=\"background: linear-gradient(90deg, #4e73df, #1cc88a); color:#ffffff; padding:25px 30px;\">\n              <h1 style=\"margin:0; font-size:22px;\">📊 Weekly Team Performance Report</h1>\n              <p style=\"margin:5px 0 0; font-size:14px;\">\n                {{ $today.startOf('week').toFormat('yyyy-MM-dd') }} → {{ $today.startOf('week').plus({ days: 6 }).toFormat('yyyy-MM-dd') }}\n              </p>\n            </td>\n          </tr>\n\n          <!-- Body -->\n          <tr>\n            <td style=\"padding:30px;\">\n              <p style=\"font-size:16px; margin-bottom:20px;\">Hello <strong>{{ $json.stakeholderName || 'Team' }}</strong>,</p>\n\n              <!-- KPI Cards -->\n              <table role=\"presentation\" style=\"width:100%; margin-bottom:30px; border-spacing:0; border-collapse:separate;\">\n                <tr>\n                  <td style=\"width:33.3%; background-color:#e3f2fd; padding:15px; text-align:center; border-radius:8px; border:1px solid #bbdefb;\">\n                    <h3 style=\"margin:0; font-size:14px; color:#1565c0;\">Overall Completion Rate</h3>\n                    <p style=\"margin:5px 0 0; font-size:20px; font-weight:bold; color:#0d47a1;\">{{ $('Parse Email Fields').item.json.overallCompletionRate }}</p>\n                  </td>\n                  <td style=\"width:33.3%; background-color:#e8f5e9; padding:15px; text-align:center; border-radius:8px; border:1px solid #c8e6c9;\">\n                    <h3 style=\"margin:0; font-size:14px; color:#2e7d32;\">Key Win</h3>\n                    <p style=\"margin:5px 0 0; font-size:15px; font-weight:bold; color:#1b5e20;\">{{ $('Parse Email Fields').item.json.keyWin }}</p>\n                  </td>\n                  <td style=\"width:33.3%; background-color:#ffebee; padding:15px; text-align:center; border-radius:8px; border:1px solid #ffcdd2;\">\n                    <h3 style=\"margin:0; font-size:14px; color:#c62828;\">Critical Issue</h3>\n                    <p style=\"margin:5px 0 0; font-size:15px; font-weight:bold; color:#b71c1c;\">{{ $('Parse Email Fields').item.json.criticalIssue }}</p>\n                  </td>\n                </tr>\n              </table>\n\n              <!-- Highlights -->\n              <h3 style=\"font-size:18px; margin-bottom:10px; color:#4e73df; border-bottom:2px solid #f1f3f5; padding-bottom:5px;\">Highlights</h3>\n              <ul style=\"padding-left:20px; margin-bottom:25px; font-size:15px; line-height:1.6;\">\n                <li><strong>Overall completion rate:</strong> {{ $('Parse Email Fields').item.json.overallCompletionRate }}</li>\n                <li><strong>Key win:</strong> {{ $('Parse Email Fields').item.json.keyWin }}</li>\n                <li><strong>Critical issue:</strong> {{ $('Parse Email Fields').item.json.criticalIssue }}</li>\n              </ul>\n\n              <!-- Next Steps -->\n              <h3 style=\"font-size:18px; margin-bottom:10px; color:#1cc88a; border-bottom:2px solid #f1f3f5; padding-bottom:5px;\">Next Steps</h3>\n              <ol style=\"padding-left:20px; margin-bottom:25px; font-size:15px; line-height:1.6;\">\n                <li><strong>Action required:</strong> {{ $('Parse Email Fields').item.json.actionRequired }}</li>\n                <li><strong>Resource needs:</strong> {{ $('Parse Email Fields').item.json.resourceNeeds }}</li>\n                <li><strong>Decisions needed:</strong> {{ $('Parse Email Fields').item.json.decisionsNeeded }}</li>\n              </ol>\n\n              <!-- Closing -->\n              <p style=\"font-size:15px; margin-bottom:20px;\">\n                Thank you for your attention—please let me know if you'd like to discuss any of the findings or recommendations.\n              </p>\n              <p style=\"font-size:15px; color:#555;\">\n                Best regards,<br>\n                <strong>Your Weekly Report System</strong>\n              </p>\n            </td>\n          </tr>\n\n          <!-- Footer -->\n          <tr>\n            <td style=\"background-color:#f8f9fc; padding:15px; font-size:12px; color:#999; text-align:center;\">\n              © {{ $today.toFormat('yyyy') }} Weekly Report System · Internal Use Only\n            </td>\n          </tr>\n        </table>\n\n      </td>\n    </tr>\n  </table>\n</body>\n</html>\n",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          },
+          "ccList": "uche.iheanyi.madu@gmail.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        5696,
+        -176
+      ],
+      "id": "3cc49b0a-d637-45f5-ba17-e95a5f169c7e",
+      "name": "Send Report",
+      "webhookId": "06266684-7835-49c1-b6fd-7292d792a577",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E6tZSl3afw1qUsqb",
+          "name": "Uche's Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "pdf",
+        "pdfTemplateId": "73177b23d746c8e0",
+        "download": true,
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "markdown",
+              "value": "={{ $('Report Generation Agent').item.json.output }}"
+            }
+          ]
+        },
+        "options": {
+          "fileName": "=Weekly_Report_{{ \n  $today\n    .startOf('week')\n    .format('yyyy-MM-dd') \n}}_to_{{ \n  $today\n    .endOf('week')\n    .format('yyyy-MM-dd') \n}}.pdf\n"
+        }
+      },
+      "type": "n8n-nodes-base.apiTemplateIo",
+      "typeVersion": 1,
+      "position": [
+        5472,
+        -176
+      ],
+      "id": "4bf5c1aa-a1dd-444c-982a-dc169765be87",
+      "name": "Create PDF from Report Markdown",
+      "credentials": {
+        "apiTemplateIoApi": {
+          "id": "mgzRtoA8YOqrzBdz",
+          "name": "Uche APITemplate.io account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -560,
+        -176
+      ],
+      "id": "bcf865f0-a329-4022-be1c-b15cbf3b04d9",
+      "name": "Trigger Weekly"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        112
+      ],
+      "id": "00473876-59db-4c41-916a-7e5efcb18cb4",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "C2RuixOGykv5BnMF",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Extract raw message text and remove bot mention\nlet text = items[0]?.json?.text || \"\";\ntext = text.replace(/<@[\\w]+>\\s*/, \"\").trim().toLowerCase();\n\n// Create sessionId\nconst sessionId = `${items[0]?.json?.user}-${items[0]?.json?.channel}`;\n\n// Determine if this is a reset command\nconst resetMemory = text === '/reset';\n\nreturn [{ \n  json: { \n    sessionId, \n    originalMessage: text, \n    resetMemory \n  } \n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        528
+      ],
+      "id": "5b1e92e0-1e9f-4038-a73f-e6eddd1128b0",
+      "name": "Create SessionId"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2944,
+        48
+      ],
+      "id": "e95fe45c-42ef-4f6b-bdd2-6723ac65ef9b",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "C2RuixOGykv5BnMF",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "AI Agent that can handles all calendar requests. It's responsible for scheduling, retrieving, updating, and deleting events in the user's calendar.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=You are a calendar management assistant responsible for scheduling, retrieving, updating, and deleting events in the user's calendar.\n\nCalendar Management Tools\n\nCreate Event with Attendee – Use this when an event includes a participant.\nCreate Event – Use this for solo events. If there's a participant/attendee, do not create a solo event, only create the event with an attendee\nGet Events – Retrieve calendar schedules when requested.\nDelete Event – Remove an event. First, use \"Get Events\" to obtain the event ID.\nUpdate Event – Modify an event. First, use \"Get Events\" to obtain the event ID.\nFinal Notes\nCurrent Date/Time: {{ $now.toLocal() }}\n\nIf no duration is specified, assume the event lasts one hour.\n\nIf inviting someone to an event, you will be provided the attendee’s information\n\nMake sure to render the links and emails to slack's proper markdown format before returning it to the user so it displays nicely as hyperlinks."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        3024,
+        352
+      ],
+      "id": "0a105d73-623d-42dd-acca-702e00259bdc",
+      "name": "Calendar Agent"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "alabiayomide14@gmail.com",
+          "mode": "list",
+          "cachedResultName": "alabiayomide14@gmail.com"
+        },
+        "eventId": "={{ $fromAI(\"eventID\") }}",
+        "updateFields": {
+          "end": "={{ $fromAI(\"endTime\") }}",
+          "start": "={{ $fromAI(\"startTime\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        3104,
+        560
+      ],
+      "id": "d61aadd0-eae7-4e6b-bdb2-9f294923d7f0",
+      "name": "Update Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "LjLRYsv27Df42HMN",
+          "name": "Chuka's Google Calendar account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "alabiayomide14@gmail.com",
+          "mode": "list",
+          "cachedResultName": "alabiayomide14@gmail.com"
+        },
+        "eventId": "={{ $fromAI(\"eventID\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        3232,
+        560
+      ],
+      "id": "15841356-4244-4839-a0a2-8f9e4cc9880b",
+      "name": "Delete Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "LjLRYsv27Df42HMN",
+          "name": "Chuka's Google Calendar account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "alabiayomide14@gmail.com",
+          "mode": "list",
+          "cachedResultName": "alabiayomide14@gmail.com"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', `the day before the date the user requested`, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', `the day after the date the user requested`, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        3360,
+        560
+      ],
+      "id": "99d10199-01b4-447f-a437-05f3aa79fba6",
+      "name": "Get Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "LjLRYsv27Df42HMN",
+          "name": "Chuka's Google Calendar account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "e65463fc466fd521dc1ecc1964b4d6dbac77710e2a00f0a73b597f41477d9def@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "AI Agent"
+        },
+        "start": "={{ $fromAI(\"eventStart\") }}",
+        "end": "={{ $fromAI(\"eventEnd\") }}",
+        "additionalFields": {
+          "attendees": [],
+          "summary": "={{ $fromAI(\"eventTitle\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        3488,
+        560
+      ],
+      "id": "6b784103-514d-4084-91ce-7b5f9291416a",
+      "name": "Create Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "LjLRYsv27Df42HMN",
+          "name": "Chuka's Google Calendar account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "alabiayomide14@gmail.com",
+          "mode": "list",
+          "cachedResultName": "alabiayomide14@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $fromAI(\"eventAttendeeEmail\", \"this is the attendee's email address\") }}"
+          ],
+          "summary": "={{ $fromAI(\"eventTitle\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        3616,
+        560
+      ],
+      "id": "259a9026-87b7-4fae-8db0-4f001f68cc8f",
+      "name": "Create Event with Attendee",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "LjLRYsv27Df42HMN",
+          "name": "Chuka's Google Calendar account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Task_ID', `ID of the task to delete`, 'string') }}"
+      },
+      "type": "n8n-nodes-base.clickUpTool",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        736
+      ],
+      "id": "f9d67865-8b2d-4ff2-945f-59b115c4398a",
+      "name": "Delete a task in ClickUp",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Add a new List to a Folder.",
+        "method": "POST",
+        "url": "=https://api.clickup.com/api/v2/folder/{{ $fromAI(\"folder_id\",\"id of the folder\") }}/list",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('JSON', `A JSON object containing all fields for the new list. Include the required field name and any optional fields (due_date, content, priority, status(list color)) only if explicitly provided. Omit any empty, null, or invalid fields.`, 'json') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1936,
+        720
+      ],
+      "id": "4c1a90c2-2197-47f9-9fd8-c0687596449e",
+      "name": "Create ClickUp List",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Rename a ClickUp List, update the List Info description, set a due date/time, set the List's priority, set an assignee, set or remove the List color.",
+        "method": "PUT",
+        "url": "=https://api.clickup.com/api/v2/list/{{ $fromAI(\"list_id\", \"id of the list\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('JSON', `A JSON object containing all fields for the list update. Include the required field name and any optional fields (content, due_date, priority, status, unset_status, assignee) only if explicitly provided or inferred. The status field refers to a color (e.g., \"red\", \"blue\"). Omit any empty, null, or invalid fields.`, 'json') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1952,
+        560
+      ],
+      "id": "1573aa92-017f-4145-ba56-b1119cdea799",
+      "name": "Update ClickUp List",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Delete a ClickUp List",
+        "method": "DELETE",
+        "url": "=https://api.clickup.com/api/v2/list/{{ $fromAI(\"list_id\", \"id of the list\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2080,
+        560
+      ],
+      "id": "d4352790-8008-4bdb-bf80-3dee0102fad5",
+      "name": "Delete ClickUp List",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Delete a ClickUp Folder",
+        "method": "DELETE",
+        "url": "=https://api.clickup.com/api/v2/folder/{{ $fromAI(\"folder_id\", \"id of the folder\")}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2208,
+        560
+      ],
+      "id": "404b352b-bef2-411d-806f-fcb87e26edfc",
+      "name": "Delete ClickUp Folder",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Add a new ClickUp Folder to a Space.",
+        "method": "POST",
+        "url": "=https://api.clickup.com/api/v2/space/{{ $fromAI(\"space_id\",\"id of the clickup space that contains the folder\") }}/folder",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `Name of the new ClickUp folder`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2336,
+        560
+      ],
+      "id": "ae9a13a9-d4ed-4829-85a7-e1193e7ebe0a",
+      "name": "Create ClickUp Folder",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Rename a ClickUp folder",
+        "method": "PUT",
+        "url": "=https://api.clickup.com/api/v2/folder/{{ $fromAI(\"folder_id\", \"id of the folder\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `New name for the folder`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2464,
+        560
+      ],
+      "id": "19cbacda-21c9-40bf-bfa4-a687872fa326",
+      "name": "Update ClickUp Folder",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Create a Space in ClickUp",
+        "method": "POST",
+        "url": "=https://api.clickup.com/api/v2/team/9014758992/space",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"multiple_assignees\": true,\n  \"features\": {\n    \"due_dates\": {\n      \"enabled\": true,\n      \"start_date\": true,\n      \"remap_due_dates\": true,\n      \"remap_closed_due_date\": true\n    },\n    \"time_tracking\": {\n      \"enabled\": true\n    },\n    \"tags\": {\n      \"enabled\": true\n    },\n    \"time_estimates\": {\n      \"enabled\": true\n    },\n    \"checklists\": {\n      \"enabled\": true\n    },\n    \"custom_fields\": {\n      \"enabled\": true\n    },\n    \"remap_dependencies\": {\n      \"enabled\": true\n    },\n    \"dependency_warning\": {\n      \"enabled\": true\n    },\n    \"portfolios\": {\n      \"enabled\": true\n    }\n  },\n  \"name\": \"{{ $fromAI('name', 'name of the space to be created', string) }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2592,
+        560
+      ],
+      "id": "730b2b45-b2a4-4a36-8e53-a2ec8d91eb83",
+      "name": "Create ClickUp Space",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Rename, set the Space color, and enable ClickApps for a Space.",
+        "method": "PUT",
+        "url": "=https://api.clickup.com/api/v2/space/{{ $fromAI(\"space_id\", \"id of the space\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"private\": true,\n  \"admin_can_manage\": true,\n  \"multiple_assignees\": true,\n  \"features\": {\n    \"due_dates\": {\n      \"enabled\": true,\n      \"start_date\": true,\n      \"remap_due_dates\": true,\n      \"remap_closed_due_date\": true\n    },\n    \"time_tracking\": {\n      \"enabled\": true\n    },\n    \"tags\": {\n      \"enabled\": true\n    },\n    \"time_estimates\": {\n      \"enabled\": true\n    },\n    \"checklists\": {\n      \"enabled\": true\n    },\n    \"custom_fields\": {\n      \"enabled\": true\n    },\n    \"remap_dependencies\": {\n      \"enabled\": true\n    },\n    \"dependency_warning\": {\n      \"enabled\": true\n    },\n    \"portfolios\": {\n      \"enabled\": true\n    }\n  },\n  \"name\": \"{{ $fromAI('name', 'new name for the space', string) }}\",\n  \"color\": \"{{ $fromAI('color', 'new color like #7B68EE', string) }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2720,
+        560
+      ],
+      "id": "193e1dc2-d502-44aa-8317-d000894efb73",
+      "name": "Update ClickUp Space",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Delete a Space from a Workspace.",
+        "method": "DELETE",
+        "url": "=https://api.clickup.com/api/v2/space/{{$fromAI(\"space_id\", \"id of the space\")}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2848,
+        560
+      ],
+      "id": "c656e662-b2e6-4415-a351-b575e64c720f",
+      "name": "Delete ClickUp Space",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "An agent that plans, researches, reasons, designs and facilitates the breakdown of vague or complex queries to structure projects for executives.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', `Instructions about a vague or potentially complex request`, 'string') }}",
+        "options": {
+          "systemMessage": "=You are the **Planner Agent**, a strategic project planner that turns high-level executive requests into a **scoped, structured project plan**.\n\n---\n\n## **Role**\n\n* Your purpose is to **help executives move from idea → project structure → actionable plan**.\n* You **plan, research, and reason**, but you **do not execute** — execution is handled by **EWA**.\n* You can **use research tools** (internet, knowledge bases, etc.) to enrich your planning.\n\nBreak down each plan into component parts and keep track of them to ensure that each part of the plan is confirmed to have been implemented.\n---\n\n## **Workflow**\n\n1. **Understand & Clarify**\n\n   * Analyze vague or high-level requests.\n   * Research if necessary (market benchmarks, timelines, task patterns, etc.).\n   * Infer what departments, groups, or tasks are required.\n\n2. **Propose Project Structure**\n\n   * Break idea into **Space → Folder → List → Task → Subtask**.\n   * Group logically (departments, phases, deliverables).\n   * Add reasoning notes (“This folder groups marketing deliverables…”).\n\n3. **Present Draft to Executive**\n\n   * Communicate back in **two forms**:\n     a) **Human-readable outline** (so execs can understand quickly).\n     b) **Draft Blueprint JSON** (schema-compliant, wrapped in `\"draft_blueprint\"`).\n   * Encourage iteration before finalizing.\n\n4. **After Iteration**\n\n   * Once user confirms, output **only the final Blueprint JSON** under `\"blueprint\"`, ready for EWA.\n\n---\n\n## **Blueprint Schema**\n\n```json\n{\n  \"spaces\": [\n    {\n      \"name\": \"Space Name\",\n      \"description\": \"What this space is for\",\n      \"folders\": [\n        {\n          \"name\": \"Folder Name\",\n          \"description\": \"Purpose of this folder\",\n          \"lists\": [\n            {\n              \"name\": \"List Name\",\n              \"description\": \"Scope of this list\",\n              \"tasks\": [\n                {\n                  \"name\": \"Task Name\",\n                  \"description\": \"Details of what needs to be done\",\n                  \"priority\": \"Urgent | High | Normal | Low | null\",\n                  \"due_date\": \"YYYY-MM-DD or null\",\n                  \"assignees\": [],\n                  \"subtasks\": []\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}\n```\n\n---\n\n## **User-Facing Response Rules (Parser-Safe)**\n\n* **Draft stage (iteration):**\n\n  * Respond with:\n\n    1. A **plain outline** for the executive to review.\n    2. A **JSON draft** under a root key `\"draft_blueprint\"` — always schema-compliant, may include `\"TBD\"` or `null`.\n\n    ```json\n    {\n      \"draft_blueprint\": {\n        \"spaces\": [...]\n      }\n    }\n    ```\n\n* **Approval stage (final):**\n\n  * Output **only the JSON** under `\"blueprint\"`.\n\n    ```json\n    {\n      \"blueprint\": {\n        \"spaces\": [...]\n      }\n    }\n    ```\n\n* **Simple edits (not a project plan):**\n\n  * Forward directly to **EWA** instead of generating a blueprint.\n\n---\n\n\n# ✅ Example: Executive Request\n\n*\"We need to launch a social media campaign for our new product next month.\"*\n\n---\n\n## **Draft Stage (Planner Response)**\n\n### Human Outline (for execs)\n\n* **Space**: Marketing\n* **Folder**: Product Launch Campaign\n* **List**: Social Media\n\n  * **Task 1**: Define campaign goals\n  * **Task 2**: Create content calendar\n  * **Task 3**: Design creative assets\n  * **Task 4**: Schedule posts\n  * **Task 5**: Track performance\n\n### JSON Draft (for parser)\n\n```json\n{\n  \"draft_blueprint\": {\n    \"spaces\": [\n      {\n        \"name\": \"Marketing\",\n        \"description\": \"Projects and campaigns for the Marketing department\",\n        \"folders\": [\n          {\n            \"name\": \"Product Launch Campaign\",\n            \"description\": \"Organize all deliverables for the new product launch\",\n            \"lists\": [\n              {\n                \"name\": \"Social Media\",\n                \"description\": \"Plan, create, and schedule social media content\",\n                \"tasks\": [\n                  {\n                    \"name\": \"Define campaign goals\",\n                    \"description\": \"Clarify objectives, KPIs, and target audience\",\n                    \"priority\": \"High\",\n                    \"due_date\": null,\n                    \"assignees\": [],\n                    \"subtasks\": []\n                  },\n                  {\n                    \"name\": \"Create content calendar\",\n                    \"description\": \"Draft a schedule of posts for the campaign period\",\n                    \"priority\": \"Normal\",\n                    \"due_date\": null,\n                    \"assignees\": [],\n                    \"subtasks\": []\n                  },\n                  {\n                    \"name\": \"Design creative assets\",\n                    \"description\": \"Develop graphics, videos, and copy for campaign\",\n                    \"priority\": \"High\",\n                    \"due_date\": null,\n                    \"assignees\": [],\n                    \"subtasks\": []\n                  },\n                  {\n                    \"name\": \"Schedule posts\",\n                    \"description\": \"Upload and schedule content in the posting tool\",\n                    \"priority\": \"Normal\",\n                    \"due_date\": null,\n                    \"assignees\": [],\n                    \"subtasks\": []\n                  },\n                  {\n                    \"name\": \"Track performance\",\n                    \"description\": \"Monitor analytics and optimize campaign as needed\",\n                    \"priority\": \"Normal\",\n                    \"due_date\": null,\n                    \"assignees\": [],\n                    \"subtasks\": []\n                  }\n                ]\n              }\n            ]\n          }\n        ]\n      }\n    ]\n  }\n}\n```\n\n---\n\n## **Final Stage (after approval)**\n\n```json\n{\n  \"blueprint\": {\n    \"spaces\": [\n      {\n        \"name\": \"Marketing\",\n        \"description\": \"Projects and campaigns for the Marketing department\",\n        \"folders\": [\n          {\n            \"name\": \"Product Launch Campaign\",\n            \"description\": \"Organize all deliverables for the new product launch\",\n            \"lists\": [\n              {\n                \"name\": \"Social Media\",\n                \"description\": \"Plan, create, and schedule social media content\",\n                \"tasks\": [\n                  {\n                    \"name\": \"Define campaign goals\",\n                    \"description\": \"Clarify objectives, KPIs, and target audience\",\n                    \"priority\": \"High\",\n                    \"due_date\": \"2025-09-05\",\n                    \"assignees\": [\"Marketing Manager\"],\n                    \"subtasks\": []\n                  },\n                  {\n                    \"name\": \"Create content calendar\",\n                    \"description\": \"Draft a schedule of posts for the campaign period\",\n                    \"priority\": \"Normal\",\n                    \"due_date\": \"2025-09-10\",\n                    \"assignees\": [\"Content Strategist\"],\n                    \"subtasks\": []\n                  },\n                  {\n                    \"name\": \"Design creative assets\",\n                    \"description\": \"Develop graphics, videos, and copy for campaign\",\n                    \"priority\": \"High\",\n                    \"due_date\": \"2025-09-12\",\n                    \"assignees\": [\"Designer\"],\n                    \"subtasks\": []\n                  },\n                  {\n                    \"name\": \"Schedule posts\",\n                    \"description\": \"Upload and schedule content in the posting tool\",\n                    \"priority\": \"Normal\",\n                    \"due_date\": \"2025-09-15\",\n                    \"assignees\": [\"Social Media Manager\"],\n                    \"subtasks\": []\n                  },\n                  {\n                    \"name\": \"Track performance\",\n                    \"description\": \"Monitor analytics and optimize campaign as needed\",\n                    \"priority\": \"Normal\",\n                    \"due_date\": \"2025-09-30\",\n                    \"assignees\": [\"Data Analyst\"],\n                    \"subtasks\": []\n                  }\n                ]\n              }\n            ]\n          }\n        ]\n      }\n    ]\n  }\n}\n```\n\n---\n\nThis gives you:\n\n* ✅ **Outline** for exec review.\n* ✅ **Draft JSON** with placeholders/nulls.\n* ✅ **Final JSON** with filled-in details (ready for EWA execution).\n\n\n\n\n\nEnsure to propose the proper and valid due dates or priority levels when required. Never set due dates in the past. all dates must be greater than the current date and time.\n\nThis is the current date and time: **{{ $now.toLocal() }}**\n\n",
+          "maxIterations": 15
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        3648,
+        352
+      ],
+      "id": "5ef11098-4765-4399-b5a3-3ab10b3d21be",
+      "name": "Planner Agent"
+    },
+    {
+      "parameters": {
+        "mode": "delete",
+        "deleteMode": "all"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryManager",
+      "typeVersion": 1.1,
+      "position": [
+        2864,
+        736
+      ],
+      "id": "85d779b6-1f50-4f62-83c3-454812ce18a5",
+      "name": "Chat Memory Manager"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "08d68eb7-a4cf-4298-8789-413caf0ccd5b",
+              "leftValue": "={{ $json.resetMemory }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        528
+      ],
+      "id": "973fefbd-dde3-4767-b6cd-9c0797a7615e",
+      "name": "Reset Memory?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5d60d5d0-2d32-4e2b-a6a4-bda01d964b25",
+              "name": "output",
+              "value": "✅ Your assistant memory has been reset. All previous context is cleared.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5248,
+        736
+      ],
+      "id": "96bccab8-7970-4595-839f-bc115930befa",
+      "name": "Set Notification Message"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C08PU1SKSKF",
+          "mode": "list",
+          "cachedResultName": "n8n-messages"
+        },
+        "text": "={{ $json.output\n   // Headings: #, ##, ###... → *Heading*\n   .replace(/^#{1,6} (.*)$/gm, \"*$1*\")\n\n   // Bold: **bold** → *bold*\n   .replace(/\\*\\*(.*?)\\*\\*/g, \"*$1*\")\n\n   // Italics: *italic* or _italic_ → _italic_\n   .replace(/(^|[^*])\\*(?!\\s)([^*]+?)\\*(?!\\s)/g, \"$1_$2_\")  // single * → _\n   .replace(/_(.*?)_/g, \"_$1_\")\n\n   // Inline code: `code` → `code`\n   .replace(/`([^`]+)`/g, \"`$1`\")\n\n   // Code block: ```...``` → ```...```\n   .replace(/```([\\s\\S]*?)```/g, \"```\\n$1\\n```\")\n\n   // Links: [text](url) → <url|text>\n   .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, \"<$2|$1>\")\n\n   // Bullets: - item or * item → • item\n   .replace(/^- (.*)$/gm, \"• $1\")\n   .replace(/^\\* (.*)$/gm, \"• $1\")\n\n   // Convert escaped \\n to actual newlines\n   .replace(/\\\\n/g, \"\\n\")\n}}\n",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        5472,
+        736
+      ],
+      "id": "234440f0-6f52-4d6e-8917-d5d16211c6a6",
+      "name": "Confirm Memory Reset",
+      "webhookId": "556bb10e-b0ea-4605-9a52-0add5a9427e1",
+      "credentials": {
+        "slackApi": {
+          "id": "WsEYDEri7ltTYCeK",
+          "name": "Uche Slack"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C08PU1SKSKF",
+          "mode": "list",
+          "cachedResultName": "n8n-messages"
+        },
+        "text": "={{ $json.output\n   // Headings: #, ##, ###... → *Heading*\n   .replace(/^#{1,6} (.*)$/gm, \"*$1*\")\n\n   // Bold: **bold** → *bold*\n   .replace(/\\*\\*(.*?)\\*\\*/g, \"*$1*\")\n\n   // Italics: *italic* or _italic_ → _italic_\n   .replace(/(^|[^*])\\*(?!\\s)([^*]+?)\\*(?!\\s)/g, \"$1_$2_\")  // single * → _\n   .replace(/_(.*?)_/g, \"_$1_\")\n\n   // Inline code: `code` → `code`\n   .replace(/`([^`]+)`/g, \"`$1`\")\n\n   // Code block: ```...``` → ```...```\n   .replace(/```([\\s\\S]*?)```/g, \"```\\n$1\\n```\")\n\n   // Links: [text](url) → <url|text>\n   .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, \"<$2|$1>\")\n\n   // Bullets: - item or * item → • item\n   .replace(/^- (.*)$/gm, \"• $1\")\n   .replace(/^\\* (.*)$/gm, \"• $1\")\n\n   // Convert escaped \\n to actual newlines\n   .replace(/\\\\n/g, \"\\n\")\n}}\n",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        5248,
+        336
+      ],
+      "id": "53eaf95f-8d6b-487d-b2e9-33d601900620",
+      "name": "Respond to User",
+      "webhookId": "556bb10e-b0ea-4605-9a52-0add5a9427e1",
+      "credentials": {
+        "slackApi": {
+          "id": "WsEYDEri7ltTYCeK",
+          "name": "Uche Slack"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "trigger": [
+          "app_mention"
+        ],
+        "channelId": {
+          "__rl": true,
+          "value": "C08PU1SKSKF",
+          "mode": "list",
+          "cachedResultName": "n8n-messages"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        528
+      ],
+      "id": "b6f9bf5d-2020-4670-91f8-33f677830c53",
+      "name": "Slack Trigger",
+      "webhookId": "6f909f7a-3e73-4cf4-9a4b-b2065210b9fd",
+      "credentials": {
+        "slackApi": {
+          "id": "S4DfBLpW42LGuE97",
+          "name": "Uche n8nBot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionTTL": 1800
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        176,
+        112
+      ],
+      "id": "5c3ef3c7-5ef7-4d75-9df4-93bd57d257e7",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "wJdL5sNqhaaFiyoc",
+          "name": "Uche Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionTTL": 1800,
+        "contextWindowLength": 7
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        3008,
+        528
+      ],
+      "id": "b88957b9-6c82-426a-ada8-218d55d6ea29",
+      "name": "Redis Chat Memory1",
+      "credentials": {
+        "redis": {
+          "id": "wJdL5sNqhaaFiyoc",
+          "name": "Uche Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionTTL": 1800,
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        1056,
+        576
+      ],
+      "id": "10730f3d-e560-4534-86c7-82b57cc7ac90",
+      "name": "Redis Chat Memory2",
+      "credentials": {
+        "redis": {
+          "id": "wJdL5sNqhaaFiyoc",
+          "name": "Uche Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.clickup.com/api/v2/team/9014758992/space",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        4144,
+        560
+      ],
+      "id": "877713a0-f24a-40c1-bcef-f831f0f6a0e2",
+      "name": "Get Spaces",
+      "credentials": {
+        "clickUpOAuth2Api": {
+          "id": "vGhvqnOUV4L708XZ",
+          "name": "Uche's ClickUp"
+        },
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "View the Folders in a Space.",
+        "url": "=https://api.clickup.com/api/v2/space/{{ $fromAI(\"space_id\",\"id of the clickup space that contains the folder\") }}/folder",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        4272,
+        560
+      ],
+      "id": "fd3daef4-55dd-4233-8ff4-bb4e7d292102",
+      "name": "Get Folders",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "View the Lists within a Folder.",
+        "url": "=https://api.clickup.com/api/v2/space/{{ $fromAI(\"space_id\", \"id of the clickup space that contains the lists\") }}/folder",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        3872,
+        560
+      ],
+      "id": "4832130c-0057-41ed-95ee-81fb8623b882",
+      "name": "Get Lists in Folders",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "View the Lists in a Space that aren't located in a Folder.",
+        "url": "=https://api.clickup.com/api/v2/space/{{ $fromAI(\"space_id\", \"id of the clickup space that contains the lists\") }}/list",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        4400,
+        560
+      ],
+      "id": "751c05b5-ca97-41fd-a835-39031cb468f3",
+      "name": "Get Folderless Lists",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "View the tasks in a List.",
+        "url": "=https://api.clickup.com/api/v2/list/{{ $fromAI(\"list_id\",\"id of the clickup list tthat contains the tasks\") }}/task",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        4528,
+        560
+      ],
+      "id": "e0634b26-9a47-45fc-af7b-5d286665f9b8",
+      "name": "Get Tasks",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "=This agent calls ClickUp API's GET endpoints to retrieve info about spaces, folders, lists, folderless lists, and tasks, members of lists and tasks, and comments on lists and tasks.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=You are a helpful assistant that makes calls to ClickUp API GET endpoints to retrieve the current state of resources in a ClickUp workspace, including spaces, folders, lists, folderless lists, and tasks, members of lists and tasks, and comments on lists and tasks. These endpoints require the corresponding id of the upper layer in the ClickUp workspace hierarchy. For example, to get info about folders, the id of the space that contains it is required, which means you'd have the get spaces first to extract the relevant space id. Similarly, folderless lists require the space id, lists require the id of the folder in which they are nested and tasks require the id of the list which contain them. comments and members of lists and tasks require their corresponding list and task ids.\n\nEnsure to retrieve and track the correct id of the resources to be used by other tools. Never guess ids always call the relevant tool to retrieve the appropriate ids.\n\nApart from ids, you may also have to retrieve the allowed priority, status and other details useful for the an operation.\n\nYou are part of an ecosystem of agents, some of these agents will require you to provide the details of ClickUp resources, particilarly their ids to carry out dependent tasks.\n\nAvailable Tools:\nGet Spaces - Call this to get high-level info about spaces in a workspace\nGet Folders - Call this tool to get info about folders in a workspace\nGet Folderless Lists - Call this tool to info about the lists that are not nested in folders within a space\nGet Lists - Call this tool to get info about lists that are nested within folders\nGet Tasks - Call this tool to get info about tasks in lists\nGet List Comments - Call this to get comments added to a list\nGet Task Comments - Call this to get comments added to a task\nGet List Members - Call this to get members added to a list\nGet Task Members - Call this to get members added to a task\nDatetime Converter - Call this tool to get the datetime of clickup events rather than the default unix timestamp that clickup returns. this is useful for queries that involve time-comparison.\n\nAlways retrieve the links to the resources, especially tasks.\n\nFor requests that are time-relative, use the current time to compare with the time/date of the relevant resources. For example, if asked about tasks from this week, compare the current time to the time of tasks retrieved and report on tasks from this week, taking a week to begin by 12:00 am Monday and end 11:59pm Sunday.\n\n📅 Week Comparison Rule\n\nWhen comparing whether a task was created \"this week\":\n1. Treat the week as starting **Monday 00:00** and ending **Sunday 23:59**, based on the local timezone.\n2. Use the converted datetime (from the Datetime Converter tool) and compare it against the current time: {{ $now.toLocal() }}.\n3. Only include tasks whose created date falls between Monday 00:00 and Sunday 23:59 of the current week.\n4. Ignore tasks created outside this range, even if they appear recently in the API.\n\n\n🕒 Date Conversion Rule\n\nClickUp API date fields (e.g., start_date, due_date, date_created, date_updated) are returned as Unix timestamps in milliseconds — for example:\n\n\"date_created\": \"1756379084699\",\n\"date_updated\": \"1756379084858\"\n\"due_date\": \"1756379084858\"\n\n\nBefore performing any time-based comparison or formatting, you must convert the relevant date values to datetime format\n\n\nCurrent time: {{ $now.toLocal() }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        4304,
+        64
+      ],
+      "id": "96c32094-ae9f-463a-8f5b-fb6a4c1716a6",
+      "name": "Get ClickUp Workspace Details"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        4016,
+        560
+      ],
+      "id": "aa1c207c-7a62-4d9b-8702-562928b14d6f",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "C2RuixOGykv5BnMF",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get Workspace members who have access to a List.",
+        "url": "=https://api.clickup.com/api/v2/list/{{ $fromAI(\"list_id\", \"id of the list to which members belong\") }}/member",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        4656,
+        560
+      ],
+      "id": "522a6d6f-bc79-4290-a255-0a4cd491dc5a",
+      "name": "Get List Members",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "View the people who have access to a task. Responses do not include people with inherited Hierarchy permission to the task.",
+        "url": "=https://api.clickup.com/api/v2/task/{{ $fromAI(\"task_id\",\"id of the task\") }}/member",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        4784,
+        560
+      ],
+      "id": "ccc4e1fe-ab51-40a6-8c92-5f67ef3a8bf2",
+      "name": "Get Task Members",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "View task comments.",
+        "url": "=https://api.clickup.com/api/v2/task/{{ $fromAI(\"task_id\",\"id of the task\") }}/comment",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        4912,
+        560
+      ],
+      "id": "0f9cde85-5336-4471-9490-122f5ba29529",
+      "name": "Get Task Comments",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "View the comments added to a List.",
+        "url": "=https://api.clickup.com/api/v2/list/{{ $fromAI(\"list_id\", \"id of the list to which comments were made\") }}/member",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        5040,
+        560
+      ],
+      "id": "4f2f8fe8-ce41-4f9a-bc22-cf7e90dd0358",
+      "name": "Get List Comments",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionTTL": 300
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        -64,
+        1712
+      ],
+      "id": "058b38d4-ea6a-455d-9b81-5022c7c93c56",
+      "name": "Redis Chat Memory3",
+      "credentials": {
+        "redis": {
+          "id": "wJdL5sNqhaaFiyoc",
+          "name": "Uche Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -64,
+        1360
+      ],
+      "id": "e495b80f-ea0d-4034-ae65-031700ac1295",
+      "name": "OpenAI Chat Model4",
+      "credentials": {
+        "openAiApi": {
+          "id": "C2RuixOGykv5BnMF",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionTTL": 1800,
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        3728,
+        544
+      ],
+      "id": "97daec97-1d8e-4df5-a944-38978dcbb289",
+      "name": "Redis Chat Memory4",
+      "credentials": {
+        "redis": {
+          "id": "wJdL5sNqhaaFiyoc",
+          "name": "Uche Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionTTL": 1800
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        5184,
+        560
+      ],
+      "id": "53e9a537-e48f-4d4c-b615-a5e3a3785944",
+      "name": "Redis Chat Memory5",
+      "credentials": {
+        "redis": {
+          "id": "wJdL5sNqhaaFiyoc",
+          "name": "Uche Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Call this tool to convert unix timestamp to datetime format",
+        "jsCode": "// Convert ClickUp's millisecond timestamp (e.g. \"1755181677934\") \n// into a Date object comparable to {{ $now.toLocal() }}\nconst clickupDate = new Date(Number(query)); \nconst localDateTime = new Date(clickupDate.toISOString());\nreturn localDateTime;\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        3904,
+        352
+      ],
+      "id": "6b68f99a-7f4b-4562-9872-a58d8497d079",
+      "name": "Datetime converter"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Add a new List without a folder in a Space.",
+        "method": "POST",
+        "url": "=https://api.clickup.com/api/v2/space/{{ $fromAI(\"space_id\",\"id of the space\") }}/list",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "clickUpApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('JSON', `A JSON object containing all fields for the new list. Include the required field name and any optional fields (due_date, content, priority, status(list color)) only if explicitly provided. Omit any empty, null, or invalid fields.`, 'json') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2096,
+        736
+      ],
+      "id": "cd9bb4ce-8bd4-47e1-9102-7bcbb93c9b2a",
+      "name": "Create Folderless List",
+      "credentials": {
+        "clickUpApi": {
+          "id": "e8R0sFGGfexAezWA",
+          "name": "Uche ClickUp PAT"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Slack Trigger": [
+      {
+        "json": {
+          "type": "app_mention",
+          "user": "U08PZF5GFEF",
+          "ts": "1761476140.552529",
+          "client_msg_id": "6584c286-e7d4-4d28-b820-c15656f858bd",
+          "text": "change the due date of *Send Q3 newsletter draft to review* to the coming thursday by 3 pm <@U09A7TGFSG2>",
+          "team": "T08PZF5GF27",
+          "blocks": [
+            {
+              "type": "rich_text",
+              "block_id": "25CJp",
+              "elements": [
+                {
+                  "type": "rich_text_section",
+                  "elements": [
+                    {
+                      "type": "text",
+                      "text": "change the due date of "
+                    },
+                    {
+                      "type": "text",
+                      "text": "Send Q3 newsletter draft to review ",
+                      "style": {
+                        "bold": true
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "text": "to the coming thursday by 3 pm "
+                    },
+                    {
+                      "type": "user",
+                      "user_id": "U09A7TGFSG2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "channel": "C08PU1SKSKF",
+          "event_ts": "1761476140.552529"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "Executive Workflow Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get DB Schema and Tables List": {
+      "ai_tool": [
+        [
+          {
+            "node": "SQL Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute SQL Query": {
+      "ai_tool": [
+        [
+          {
+            "node": "SQL Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Table Definition": {
+      "ai_tool": [
+        [
+          {
+            "node": "SQL Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SQL Agent": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Think1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Report Generation Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executive Workflow Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ClickUp Create Events Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Executive Workflow Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a task dependency in ClickUp": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ClickUp Task": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a task in ClickUp": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a comment in ClickUp": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Generation Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Markdown for Email Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Session ID": {
+      "main": [
+        [
+          {
+            "node": "Report Generation Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Markdown for Email Fields": {
+      "main": [
+        [
+          {
+            "node": "Parse Email Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Email Fields": {
+      "main": [
+        [
+          {
+            "node": "Create PDF from Report Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create PDF from Report Markdown": {
+      "main": [
+        [
+          {
+            "node": "Send Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Weekly": {
+      "main": [
+        [
+          {
+            "node": "Generate Session ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Executive Workflow Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Report Generation Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create SessionId": {
+      "main": [
+        [
+          {
+            "node": "Reset Memory?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Parse Markdown for Email Fields",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Executive Workflow Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event with Attendee": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a task in ClickUp": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ClickUp List": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update ClickUp List": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete ClickUp List": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete ClickUp Folder": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ClickUp Folder": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update ClickUp Folder": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ClickUp Space": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update ClickUp Space": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete ClickUp Space": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planner Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Executive Workflow Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory Manager": {
+      "main": [
+        [
+          {
+            "node": "Set Notification Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset Memory?": {
+      "main": [
+        [
+          {
+            "node": "Executive Workflow Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Chat Memory Manager",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Notification Message": {
+      "main": [
+        [
+          {
+            "node": "Confirm Memory Reset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create SessionId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Report Generation Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Executive Workflow Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Chat Memory Manager",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Spaces": {
+      "ai_tool": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Folders": {
+      "ai_tool": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lists in Folders": {
+      "ai_tool": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Folderless Lists": {
+      "ai_tool": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Tasks": {
+      "ai_tool": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ClickUp Workspace Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "Executive Workflow Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Report Generation Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Planner Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get List Members": {
+      "ai_tool": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Task Members": {
+      "ai_tool": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Task Comments": {
+      "ai_tool": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get List Comments": {
+      "ai_tool": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory3": {
+      "ai_memory": [
+        [
+          {
+            "node": "SQL Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SQL Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory4": {
+      "ai_memory": [
+        [
+          {
+            "node": "Planner Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory5": {
+      "ai_memory": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datetime converter": {
+      "ai_tool": [
+        [
+          {
+            "node": "Get ClickUp Workspace Details",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Executive Workflow Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Folderless List": {
+      "ai_tool": [
+        [
+          {
+            "node": "ClickUp Create Events Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "35bffe86-4d98-4651-abbf-8bab734ffcad",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "ukL3JWnhiXNb2ufU",
+  "tags": []
+}

@@ -1,0 +1,2162 @@
+{
+  "name": "Get Webhook Event Logs",
+  "nodes": [
+    {
+      "parameters": {
+        "team": "9014758992",
+        "events": [
+          "*"
+        ],
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.clickUpTrigger",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        848
+      ],
+      "id": "6a242130-5301-4d0c-840f-cc66143fc574",
+      "name": "ClickUp Trigger",
+      "webhookId": "f1b169ba-b10a-44ab-b761-b19dbf51e73c",
+      "credentials": {
+        "clickUpApi": {
+          "id": "0L6rT072VxHZYOQF",
+          "name": "ClickUp PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.clickup.com/api/v2/list/{{ $json.list_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "pk_218647598_1VJONRXOLIDCB8MZG27D7OPNBQP61SA4"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -528,
+        368
+      ],
+      "id": "1c892e28-9654-4d9b-ab91-db48e8678483",
+      "name": "Get List Details"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "folders",
+          "mode": "list",
+          "cachedResultName": "folders"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "archived": "={{ $json.archived }}",
+            "deleted": "={{ $json.deleted }}",
+            "hidden": "={{ $json.hidden }}",
+            "folder_id": "={{ $json.id }}",
+            "space_id": "={{ $json.space.id }}",
+            "name": "={{ $json.name }}",
+            "task_count": "={{ $json.task_count }}",
+            "orderindex": "={{ $json.orderindex }}",
+            "statuses": "={{ JSON.stringify({ statuses: $json.statuses }) }}\n",
+            "permission_level": "={{ $json.permission_level }}",
+            "history_items": "={{ JSON.stringify({ history_items\n: $('ClickUp Trigger').item.json.history_items }) }}"
+          },
+          "matchingColumns": [
+            "folder_id"
+          ],
+          "schema": [
+            {
+              "id": "folder_id",
+              "displayName": "folder_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "space_id",
+              "displayName": "space_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "archived",
+              "displayName": "archived",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "deleted",
+              "displayName": "deleted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "hidden",
+              "displayName": "hidden",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "orderindex",
+              "displayName": "orderindex",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "task_count",
+              "displayName": "task_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "permission_level",
+              "displayName": "permission_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "statuses",
+              "displayName": "statuses",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "snapshot_updated_at",
+              "displayName": "snapshot_updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "history_items",
+              "displayName": "history_items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -80,
+        176
+      ],
+      "id": "79f0b2cb-231c-4ccd-95df-7a54a484cf75",
+      "name": "Upsert Folders Table",
+      "credentials": {
+        "postgres": {
+          "id": "mz5wbWo7cf2nNxsC",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "lists",
+          "mode": "list",
+          "cachedResultName": "lists"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "archived": "={{ $json.archived }}",
+            "deleted": "={{ $json.deleted }}",
+            "list_id": "={{ $json.id }}",
+            "name": "={{ $json.name }}",
+            "folder_id": "={{ $json.folder.id }}",
+            "space_id": "={{ $json.space.id }}",
+            "permission_level": "={{ $json.permission_level }}",
+            "due_date": "={{ $json.due_date?.toDateTime('ms') }}",
+            "start_date": "={{ $json.start_date?.toDateTime('ms') }}",
+            "task_count": "={{ $json.task_count }}",
+            "priority": "={{ $json.priority }}",
+            "assignee": "={{ $json.assignee }}",
+            "statuses": "={{ JSON.stringify({ statuses: $json.statuses }) }}\n",
+            "orderindex": "={{ $json.orderindex }}",
+            "history_items": "={{ JSON.stringify({ history_items\n: $('ClickUp Trigger').item.json.history_items }) }}"
+          },
+          "matchingColumns": [
+            "list_id"
+          ],
+          "schema": [
+            {
+              "id": "list_id",
+              "displayName": "list_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "space_id",
+              "displayName": "space_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "folder_id",
+              "displayName": "folder_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "archived",
+              "displayName": "archived",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "deleted",
+              "displayName": "deleted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "orderindex",
+              "displayName": "orderindex",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "task_count",
+              "displayName": "task_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "permission_level",
+              "displayName": "permission_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "start_date",
+              "displayName": "start_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "assignee",
+              "displayName": "assignee",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "statuses",
+              "displayName": "statuses",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "snapshot_updated_at",
+              "displayName": "snapshot_updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "history_items",
+              "displayName": "history_items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -304,
+        464
+      ],
+      "id": "7d06b91c-9988-43c3-a1a1-0bb74049c836",
+      "name": "Upsert Lists Table",
+      "credentials": {
+        "postgres": {
+          "id": "mz5wbWo7cf2nNxsC",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tasks",
+          "mode": "list",
+          "cachedResultName": "tasks"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "archived": "={{ $json.archived }}",
+            "task_id": "={{ $json.id }}",
+            "custom_id": "={{ $json.custom_id }}",
+            "custom_item_id": "={{ $json.custom_item_id }}",
+            "name": "={{ $json.name }}",
+            "text_content": "={{ $json.text_content }}",
+            "description": "={{ $json.description }}",
+            "status": "={{ $json.status }}",
+            "orderindex": "={{ $json.orderindex }}",
+            "date_created": "={{ $json.date_created?.toDateTime('ms') }}",
+            "date_updated": "={{ $json.date_updated?.toDateTime('ms') }}",
+            "date_closed": "={{ $json.date_closed?.toDateTime('ms') }}",
+            "date_done": "={{ $json.date_closed?.toDateTime('ms') }}",
+            "creator": "={{ $json.creator }}",
+            "list_id": "={{ $json.list.id }}",
+            "folder_id": "={{ $json.folder.id }}",
+            "space_id": "={{ $json.space.id }}",
+            "attachments": "={{ JSON.stringify({ attachments: $json.attachments }) }}",
+            "linked_tasks": "={{ JSON.stringify({ linked_tasks: $json.linked_tasks }) }}",
+            "dependencies": "={{ JSON.stringify({ dependencies: $json.dependencies }) }}",
+            "custom_fields": "={{ JSON.stringify({ custom_fields: $json.custom_fields }) }}",
+            "locations": "={{ JSON.stringify({ locations: $json.locations }) }}",
+            "url": "={{ $json.url }}",
+            "team_id": "={{ $json.team_id }}",
+            "sharing": "={{ $json.sharing }}",
+            "permission_level": "={{ $json.permission_level }}",
+            "time_spent": "={{ $json.time_spent }}",
+            "time_estimate": "={{ $json.time_estimate }}",
+            "points": "={{ $json.points }}",
+            "start_date": "={{ $json.start_date?.toDateTime('ms') }}",
+            "due_date": "={{ $json.due_date?.toDateTime('ms') }}",
+            "priority": "={{ $json.priority }}",
+            "top_level_parent": "={{ $json.top_level_parent }}",
+            "parent": "={{ $json.parent }}",
+            "tags": "={{ $json.tags }}{{ JSON.stringify({ locations: $json.locations }) }}",
+            "checklists": "={{ JSON.stringify({ checklists: $json.checklists }) }}",
+            "watchers": "={{ JSON.stringify({ watchers: $json.watchers }) }}",
+            "group_assignees": "={{ JSON.stringify({ group_assignees: $json.group_assignees }) }}",
+            "assignees": "={{ JSON.stringify({ assignees: $json.assignees }) }}",
+            "history_items": "={{ JSON.stringify({ history_items: $('ClickUp Trigger').item.json.history_items }) }}"
+          },
+          "matchingColumns": [
+            "task_id"
+          ],
+          "schema": [
+            {
+              "id": "task_id",
+              "displayName": "task_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "custom_id",
+              "displayName": "custom_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "custom_item_id",
+              "displayName": "custom_item_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "text_content",
+              "displayName": "text_content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "orderindex",
+              "displayName": "orderindex",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "date_created",
+              "displayName": "date_created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "date_updated",
+              "displayName": "date_updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "date_closed",
+              "displayName": "date_closed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "date_done",
+              "displayName": "date_done",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "archived",
+              "displayName": "archived",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "creator",
+              "displayName": "creator",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "assignees",
+              "displayName": "assignees",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "group_assignees",
+              "displayName": "group_assignees",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "watchers",
+              "displayName": "watchers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "checklists",
+              "displayName": "checklists",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "tags",
+              "displayName": "tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "parent",
+              "displayName": "parent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "top_level_parent",
+              "displayName": "top_level_parent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "start_date",
+              "displayName": "start_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "points",
+              "displayName": "points",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "time_estimate",
+              "displayName": "time_estimate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "time_spent",
+              "displayName": "time_spent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "custom_fields",
+              "displayName": "custom_fields",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "dependencies",
+              "displayName": "dependencies",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "linked_tasks",
+              "displayName": "linked_tasks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "locations",
+              "displayName": "locations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "team_id",
+              "displayName": "team_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "sharing",
+              "displayName": "sharing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "permission_level",
+              "displayName": "permission_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "list_id",
+              "displayName": "list_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "folder_id",
+              "displayName": "folder_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "space_id",
+              "displayName": "space_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "attachments",
+              "displayName": "attachments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "snapshot_updated_at",
+              "displayName": "snapshot_updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "history_items",
+              "displayName": "history_items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -304,
+        656
+      ],
+      "id": "309dc09c-2a61-400c-ab57-7e77777c1baf",
+      "name": "Upsert Tasks Table",
+      "credentials": {
+        "postgres": {
+          "id": "mz5wbWo7cf2nNxsC",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "spaces",
+          "mode": "list",
+          "cachedResultName": "spaces"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "is_private": "={{ $json.private }}",
+            "admin_can_manage": "={{ $json.admin_can_manage }}",
+            "multiple_assignees": "={{ $json.multiple_assignees }}",
+            "archived": "={{ $json.archived }}",
+            "space_id": "={{ $json.id }}",
+            "name": "={{ $json.name }}",
+            "color": "={{ $json.color }}",
+            "statuses": "={{ JSON.stringify({ statuses: $json.statuses }) }}",
+            "history_items": "={{ JSON.stringify({ history_items: $('ClickUp Trigger').item.json.history_items }) }}"
+          },
+          "matchingColumns": [
+            "space_id"
+          ],
+          "schema": [
+            {
+              "id": "space_id",
+              "displayName": "space_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "color",
+              "displayName": "color",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "is_private",
+              "displayName": "is_private",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "admin_can_manage",
+              "displayName": "admin_can_manage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "multiple_assignees",
+              "displayName": "multiple_assignees",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "archived",
+              "displayName": "archived",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "statuses",
+              "displayName": "statuses",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "snapshot_updated_at",
+              "displayName": "snapshot_updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "history_items",
+              "displayName": "history_items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -304,
+        -112
+      ],
+      "id": "529f36eb-c8e2-4a19-a73e-39c829818397",
+      "name": "Upsert Spaces Table",
+      "credentials": {
+        "postgres": {
+          "id": "mz5wbWo7cf2nNxsC",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.clickup.com/api/v2/space/{{ $json.space_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "pk_218647598_1VJONRXOLIDCB8MZG27D7OPNBQP61SA4"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -528,
+        -112
+      ],
+      "id": "11b5d24c-abe9-4a46-b5b4-f2c27ba4bae3",
+      "name": "Get Space Details"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.clickup.com/api/v2/task/{{ $json.task_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "pk_218647598_1VJONRXOLIDCB8MZG27D7OPNBQP61SA4"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -528,
+        656
+      ],
+      "id": "ea55d3e4-911e-4944-af55-14e1e5354f33",
+      "name": "Get Task Details"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.clickup.com/api/v2/folder/{{ $json.folder_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "pk_218647598_1VJONRXOLIDCB8MZG27D7OPNBQP61SA4"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -304,
+        80
+      ],
+      "id": "b1001178-9c5e-4fa4-82f9-e0515ae46456",
+      "name": "Get Folder Details"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "=spaceCreated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "9d0798e6-5990-489b-ae5e-1e250192c9b2"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "spaceCreated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bd164387-8dd5-4870-a010-5888096c4a08",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "folderCreated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "folderCreated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "59068c7c-df3b-4c85-9044-db6b3f8f405f",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "listCreated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "listCreated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e7ba6a40-554a-47a7-ae3f-c998148b5092",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "taskCreated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "taskCreated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0acf814b-7755-4e32-91fa-7e894724ba61",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "taskDeleted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "taskDeleted"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "093d98e3-0a7e-41f1-a782-60342243625f",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "taskStatusUpdated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "taskStatusUpdated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "78d8dd4a-924b-4151-ae7c-b2d7586b633e",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "taskUpdated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "taskUpdated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9960c3a4-a697-419e-a302-c76cccf996f8",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "spaceUpdated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "spaceUpdated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "39111abb-0c90-4749-a30e-2052ed837534",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "listDeleted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "listDeleted"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "40633ecf-87f8-4a35-98cf-0d0badc2ba22",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "folderUpdated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "folderUpdated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8a2a0e14-7105-4b82-98e4-94fa94371891",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "folderDeleted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "folderDeleted"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bcbb7a39-df17-411b-a657-6ec5ae72bc7d",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "spaceDeleted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "spaceDeleted"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9abd63e7-8d3b-4b74-997f-5b54a9bb419a",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "listUpdated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "listUpdated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "25b3b920-3964-4c69-85b9-5c6725be035b",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "taskAssigneeUpdated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "taskAssigneeUpdated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "931f1967-cfdd-4ce0-a7b4-474bbf2cc75b",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "taskPriorityUpdated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "taskPriorityUpdated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c47aed20-2779-4707-934e-3142a45cedbe",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "taskCommentPosted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "taskCommentPosted"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "17d9337b-a4d4-4e00-84b5-b29c65441749",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "listCommentPosted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "listCommentPosted"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -752,
+        608
+      ],
+      "id": "5506dbcd-57b9-4557-b818-f677225f57e7",
+      "name": "Event Router"
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tasks",
+          "mode": "list",
+          "cachedResultName": "tasks"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "=task_id",
+              "value": "={{ $json.task_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -528,
+        848
+      ],
+      "id": "31543bf7-b20a-42e3-b779-c8908b50b890",
+      "name": "Delete From Tasks Table",
+      "credentials": {
+        "postgres": {
+          "id": "mz5wbWo7cf2nNxsC",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "lists",
+          "mode": "list",
+          "cachedResultName": "lists"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "=list_id",
+              "value": "={{ $json.list_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -528,
+        1040
+      ],
+      "id": "2eef6d61-bd5d-4db6-b8e3-e1bd9e9b4c09",
+      "name": "Delete From Lists Table",
+      "credentials": {
+        "postgres": {
+          "id": "mz5wbWo7cf2nNxsC",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "folders",
+          "mode": "list",
+          "cachedResultName": "folders"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "=folder_id",
+              "value": "={{ $json.list_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -528,
+        1424
+      ],
+      "id": "553e4ee8-0c3b-4ab7-8ec8-ca00b03b7ceb",
+      "name": "Delete From Folders Table",
+      "credentials": {
+        "postgres": {
+          "id": "mz5wbWo7cf2nNxsC",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "spaces",
+          "mode": "list",
+          "cachedResultName": "spaces"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "=space_id",
+              "value": "={{ $json.space_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -528,
+        1616
+      ],
+      "id": "9817de4f-c501-469b-86a4-4a2ed8cb7fc6",
+      "name": "Delete From Spaces Table",
+      "credentials": {
+        "postgres": {
+          "id": "mz5wbWo7cf2nNxsC",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "comments",
+          "mode": "list",
+          "cachedResultName": "comments"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "comment_id": "={{ $json.history_items[0].comment.id }}",
+            "user_id": "={{ $json.history_items[0].user.id }}",
+            "parent_type": "={{ $json.parent_type }}",
+            "parent_id": "={{ $json.history_items[0].comment.parent }}",
+            "parent_type_code": "={{ $json.history_items[0].type }}",
+            "history_item": "={{ JSON.stringify({ history_items\n: $('ClickUp Trigger').item.json.history_items }) }}",
+            "comment_text": "={{ $json.history_items[0].comment.text_content }}",
+            "date_created": "={{ $json.history_items[0].comment.date.toDateTime('ms') }}"
+          },
+          "matchingColumns": [
+            "comment_id"
+          ],
+          "schema": [
+            {
+              "id": "comment_id",
+              "displayName": "comment_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "parent_type_code",
+              "displayName": "parent_type_code",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "parent_type",
+              "displayName": "parent_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "parent_id",
+              "displayName": "parent_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "date_created",
+              "displayName": "date_created",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "comment_text",
+              "displayName": "comment_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "history_item",
+              "displayName": "history_item",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "snapshot_updated_at",
+              "displayName": "snapshot_updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -304,
+        1232
+      ],
+      "id": "2db4c7e6-7a3a-4930-a00d-76f12a178053",
+      "name": "Upsert Comments Table",
+      "credentials": {
+        "postgres": {
+          "id": "mz5wbWo7cf2nNxsC",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Access the current item\nconst item = $input.item;\n\n// Your mapping logic\nconst map = { 1: 'task', 2: 'list', 3: 'view' };\nconst code = item.json.history_items?.[0]?.comment?.root_parent_type;\nitem.json.parent_type = map[code] || 'unknown';\n\nreturn item;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        1232
+      ],
+      "id": "1fd5d2a6-97d2-4dfe-a508-ef0cdd21f19a",
+      "name": "Map Parent Type"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.clickup.com/api/v2/folder/{{ $json.folder.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "pk_218647598_1VJONRXOLIDCB8MZG27D7OPNBQP61SA4"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -304,
+        272
+      ],
+      "id": "8226ca69-9ff9-4664-8e70-e8836e0e4337",
+      "name": "Get Folder Details 2"
+    },
+    {
+      "parameters": {
+        "content": "Needed to Create/Update default hidden folders associated with ClickUp's Folderless Lists.",
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -448,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "7e9b8d44-1a84-476c-b201-3343b5f5d428",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {
+    "ClickUp Trigger": [
+      {
+        "json": {
+          "event": "taskStatusUpdated",
+          "history_items": [
+            {
+              "id": "4688854944681041404",
+              "type": 1,
+              "date": "1755273673014",
+              "field": "status",
+              "parent_id": "901412275010",
+              "data": {
+                "status_type": "open"
+              },
+              "source": null,
+              "user": {
+                "id": 218647598,
+                "username": "Uchechukwu Madu",
+                "email": "dreemer6.um@gmail.com",
+                "color": null,
+                "initials": "UM",
+                "profilePicture": null,
+                "role": 1,
+                "role_subtype": 0
+              },
+              "before": {
+                "status": null,
+                "color": "#000000",
+                "type": "removed",
+                "orderindex": -1
+              },
+              "after": {
+                "status": "to do",
+                "color": "#87909e",
+                "orderindex": 0,
+                "type": "open"
+              }
+            }
+          ],
+          "task_id": "86b69ec52",
+          "team_id": "9014758992",
+          "webhook_id": "6dfe4182-5f22-42c5-aa95-59ee2c54d346"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "ClickUp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Event Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get List Details": {
+      "main": [
+        [
+          {
+            "node": "Upsert Lists Table",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Folder Details 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Space Details": {
+      "main": [
+        [
+          {
+            "node": "Upsert Spaces Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Task Details": {
+      "main": [
+        [
+          {
+            "node": "Upsert Tasks Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Folder Details": {
+      "main": [
+        [
+          {
+            "node": "Upsert Folders Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Event Router": {
+      "main": [
+        [
+          {
+            "node": "Get Space Details",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Folder Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Folder Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get List Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Task Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete From Tasks Table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Task Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Task Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Space Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete From Lists Table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Folder Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete From Folders Table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete From Spaces Table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get List Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Task Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Task Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Map Parent Type",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Map Parent Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Parent Type": {
+      "main": [
+        [
+          {
+            "node": "Upsert Comments Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Folder Details 2": {
+      "main": [
+        [
+          {
+            "node": "Upsert Folders Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f3edba28-6511-480b-9f79-f9577fedb754",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "94503cdb8fac9c649582f97df1f4b3bfcb4d6b201a16b0bdd7e1d5c5d497bbd3"
+  },
+  "id": "MJzm7UKRt3kPkdfd",
+  "tags": []
+}

@@ -1,0 +1,1200 @@
+{
+  "name": "Auto-Video Creator",
+  "nodes": [
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"instruction\": {\n      \"type\": \"string\",\n      \"description\": \"Additional context or instructions, e.g., video style, tone, etc found in the input if any, otherwise empty string.\"\n    },\n    \"article_text\": {\n      \"type\": \"string\",\n      \"description\": \"The article content if provided directly in the input, otherwise empty string\"\n    },\n    \"url\": {\n      \"type\": \"string\",\n      \"description\": \"The URL found in the input if any, otherwise empty string\"\n    }\n  },\n  \"required\": [],\n  \"additionalProperties\": false\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -416,
+        320
+      ],
+      "id": "1dab0c6d-6ea2-472d-8bac-e50a650e7fea",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a242c933-b1b2-446b-b62c-c92ea5d79b96",
+              "leftValue": "={{ $json.output.url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        112
+      ],
+      "id": "9b903f07-d7b5-4aea-aaeb-0a4a0756a22f",
+      "name": "Check if a URL is provided"
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/acts/apify~website-content-crawler/run-sync-get-dataset-items?token=apify_api_VXQjlVmqWiSQAJwN84taju9HQ1Mczq1fJgV3",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"aggressivePrune\": false,\n    \"clickElementsCssSelector\": \"[aria-expanded=\\\"false\\\"]\",\n    \"clientSideMinChangePercentage\": 15,\n    \"crawlerType\": \"cheerio\",\n    \"debugLog\": false,\n    \"debugMode\": false,\n    \"expandIframes\": true,\n    \"ignoreCanonicalUrl\": false,\n    \"keepUrlFragments\": false,\n    \"proxyConfiguration\": {\n        \"useApifyProxy\": true\n    },\n    \"readableTextCharThreshold\": 100,\n    \"removeCookieWarnings\": true,\n    \"removeElementsCssSelector\": \"nav, footer, script, style, noscript, svg, img[src^='data:'],\\n[role=\\\"alert\\\"],\\n[role=\\\"banner\\\"],\\n[role=\\\"dialog\\\"],\\n[role=\\\"alertdialog\\\"],\\n[role=\\\"region\\\"][aria-label*=\\\"skip\\\" i],\\n[aria-modal=\\\"true\\\"]\",\n    \"renderingTypeDetectionPercentage\": 10,\n    \"respectRobotsTxtFile\": true,\n    \"saveFiles\": false,\n    \"saveHtml\": false,\n    \"saveHtmlAsFile\": false,\n    \"saveMarkdown\": true,\n    \"saveScreenshots\": false,\n    \"startUrls\": [\n        {\n            \"url\": \"{{ $json.output.url }}\",\n            \"method\": \"GET\"\n        }\n    ],\n    \"useSitemaps\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        48,
+        0
+      ],
+      "id": "a6e23bf8-3682-40d7-95f1-5ca224c46eba",
+      "name": "Apify Web Scraper"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Instruction: {{ $json.instruction }}\n{{ $json.text }}\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a skilled video content creator AI. Your job is to generate short, engaging video scripts from a given topic or article. You specialize in creating scene-by-scene narrations tailored for specific platforms like YouTube Shorts, Instagram Reels, TikTok, etc.\n\nYou will receive:\nAn article text (as raw content)\nOptionally, an instruction (e.g., platform, tone, number of scenes, style, etc.)\n\nYour Task:\nAnalyze the content and instruction. Generate a concise but detailed script broken into scenes (default is 4 scenes unless otherwise specified). Each scene should be substantial, providing meaningful insight, facts, or storytelling that adds depth and engages the viewer — avoid overly summarized or shallow statements.\n\nFor each scene:\nProvide a short, engaging narration (scene_1, scene_2, scene_3, scene_4, ...). Suggest an AI image prompt (prompt_1, prompt_2, prompt_3, prompt_4, ...) that reflects the visual theme of that scene.\n\nInclude a compelling title (Title) for the video. Write a short description (Description) including relevant hashtags (If the brand or name in focus in mentioned, include it as a hashtag).\n\nOutput Format:\nReturn a single-line, compact, valid JSON with all these keys present, even if empty:{\"scene_1\":\"\",\"scene_2\":\"\",\"scene_3\":\"\",\"scene_4\":\"\",\"prompt_1\":\"\",\"prompt_2\":\"\",\"prompt_3\":\"\",\"prompt_4\":\"\",\"title\":\"\",\"description\":\"\"}\n\nAdapt the number of scenes or format if the user instruction specifies a different structure (e.g., 7 scenes, TikTok format, etc.).\n\n⚠️ Do not include a \"text\" wrapper around the JSON.\n⚠️ Do not return markdown or code blocks.\n⚠️ Do not include any explanations, commentary, or formatting hints.\n⚠️ All keys must be lowercase.\n\nRespond with a single-line JSON object containing keys like scene_1, prompt_1, title, and description only."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        704,
+        112
+      ],
+      "id": "f2d4fc0f-e2cd-49e9-aab7-17a9754fce81",
+      "name": "Generate Video Script"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        480,
+        112
+      ],
+      "id": "eb4a97bb-644e-42f4-b6f9-9d54903e75b8",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        320
+      ],
+      "id": "73a1ffe9-afed-44c4-bdaf-684fd34ac068",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "4gqanI5K9izarRWa",
+          "name": "Groq account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const unified = {\n  instruction: $('Check if a URL is provided').first().json.output.instruction || \"\",\n  text: $input.first().json.text || \"\"\n};\nreturn [{ json: unified }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        0
+      ],
+      "id": "584c1da1-4989-4a45-8100-6fcf85bb5535",
+      "name": "Standardize Apify Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst unified = {\n  instruction: $input.first().json.output.instruction || \"\",\n  text: $input.first().json.output.article_text || \"\"\n};\nreturn [{ json: unified }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        208
+      ],
+      "id": "4e21a7e3-4032-4f68-9e31-dfca4a860e1b",
+      "name": "Standardize Direct Input"
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        784,
+        320
+      ],
+      "id": "0a956337-3e6f-4865-ace1-778a9cb7785d",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "4gqanI5K9izarRWa",
+          "name": "Groq account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Blog URL (if provided):  {{ $json.fields['Blog URL'] }}\nBlog Text (if provided): {{ $json.fields['Blog Text'] }}\nInstructions/Context: {{ $json.fields.Context }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an output parser, not a content generator.\n\nYou will receive a message that may contain:\n- a URL\n- article text\n- user-provided instructions or context\n\nYour task is to:\n- Extract the instruction (e.g., video style, tone, or purpose)\n- Extract the article text if present\n- Extract the URL if present\n\nONLY return a single flat JSON object. DO NOT return an array or a stringified object.\n\nReturn output like this (not wrapped in code block, string, or array):\n\n{\n  \"instruction\": \"...\",  // The user’s instruction, if present, else an empty string\n  \"article_text\": \"...\",         // The full article text if provided, else an empty string\n  \"url\": \"...\"           // A valid URL if present, else an empty string\n}\n\n⚠️ Do not act on the instruction. Do not generate or rewrite content.\n⚠️ Do not include a \"text\" wrapper around the JSON.\n⚠️ Do not return markdown or code blocks.\n⚠️ Do not include any explanations, commentary, or formatting hints.\n\nYour only job is to extract and repackage data in that format.\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -560,
+        112
+      ],
+      "id": "2a39e1bd-5953-4191-92a5-c6ea90b5db1a",
+      "name": "Parse Input"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Step 1: Access the LLM output\nlet llmOutput = $input.first().json.text;\n\n// Step 2: Clean the output by removing Markdown code block delimiters and common prefixes\nllmOutput = llmOutput.replace(/^```(?:json)?\\n?/, \"\").replace(/\\n?```$/, \"\").replace(/^(Here is the JSON:|Here is your Markdown document:)\\s*/, \"\");\n\n// Step 3: Parse the cleaned string into a JSON object\nlet parsedFields;\ntry {\n  parsedFields = JSON.parse(llmOutput);\n} catch (error) {\n  throw new Error(\"Failed to parse JSON: \" + error.message);\n}\n\n// Step 4: Return the parsed fields\nreturn [\n  {\n    json: parsedFields\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        112
+      ],
+      "id": "1f28f17a-f412-48c6-b9a0-46730bf45e93",
+      "name": "Parse LLM Output"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v1/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer 2c6ab9fe22fb4e388199b0bd08e9e46ac0a14b25e73ea9ea4a304106b7a28f1e4f3d306bc7adaf2fb6d4b758341859e1"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"template_id\": \"2a779e9c-2bee-4522-9893-cd0a2652a2de\",\n  \"modifications\": {\n    \"Image-1.source\": \"{{ $json.prompt_1 }}\",\n    \"Voiceover-1.source\": \"{{ $json.scene_1 }}\",\n    \"Image-2.source\": \"{{ $json.prompt_2 }}\",\n    \"Voiceover-2.source\": \"{{ $json.scene_2 }}\",\n    \"Image-3.source\": \"{{ $json.prompt_3 }}\",\n    \"Voiceover-3.source\": \"{{ $json.scene_3 }}\",\n    \"Image-4.source\": \"{{ $json.prompt_4 }}\",\n    \"Voiceover-4.source\": \"{{ $json.scene_4 }}\"\n  },\n  \"webhook_url\": \"https://divverse-community.app.n8n.cloud/webhook/creatomate-callback\",\n  \"metadata\": \"{\\\"title\\\": \\\"{{$json.title}}\\\", \\\"description\\\": \\\"{{$json.description}}\\\", \\\"airtable_id\\\": \\\"{{ $('Airtable Trigger').item.json.id }}\\\"}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1312,
+        112
+      ],
+      "id": "a96aa38c-65e5-4b2b-9e66-f3b0957bc8a0",
+      "name": "Generate Video with Creatomate"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $json.title }}",
+        "regionCode": "NG",
+        "categoryId": "22",
+        "options": {
+          "description": "={{ $json.description }}",
+          "privacyStatus": "=public"
+        }
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        112,
+        -464
+      ],
+      "id": "779c2129-f174-4487-8f09-fb24ac035b4b",
+      "name": "Upload Video to YouTube",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "yLXyRO36KPGqu8Tp",
+          "name": "Uche YouTube account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d9d1396c-d9bf-47bd-81ce-246d3d19f2d3",
+              "leftValue": "={{ $('Trigger when video generation succeeds or fails').item.json.body.status }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -336,
+        -464
+      ],
+      "id": "bd9f8529-cb26-4777-826c-738f63851a15",
+      "name": "Video generation failed?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Trigger when video generation succeeds or fails').item.json.body.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -128,
+        -368
+      ],
+      "id": "069817f0-b3e1-4d40-a68c-e4bd81a8fdd1",
+      "name": "Download video"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Access the first item from the input\nconst item = $input.item;\n\n// Parse the 'metadata' string into a JSON object\nconst metadata = JSON.parse(item.json.body.metadata);\n\n// Return the extracted title and description\nreturn [\n  {\n    json: {\n      title: metadata.title,\n      description: metadata.description,\n      airtable_id: metadata.airtable_id\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        -464
+      ],
+      "id": "ee1fb388-15cb-4497-abf5-45ad17c0c973",
+      "name": "Extract metadata"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C08PU1SKSKF",
+          "mode": "list",
+          "cachedResultName": "n8n-messages"
+        },
+        "text": "=\n🚨 Video Render Failed\n\n❌ Status: {{ $('Trigger when video generation succeeds or fails').item.json.body.status }}\n\n\n🔗 Webhook Triggered: {{ $('Trigger when video generation succeeds or fails').item.json.body.webhook_url }}\n\n\n🧾 Error Message:\n\n{{$('Trigger when video generation succeeds or fails').item.json.body.error_message || \"No specific error message provided by Creatomate.\"}}\n\n",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -128,
+        -560
+      ],
+      "id": "fb25c6b4-9a93-46e2-92c0-86c82f0c7378",
+      "name": "Alert on failure",
+      "webhookId": "4176b6fb-3bd3-48c7-b59e-86d1a31e5e88",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "1rXv0zGbEhWsojwl",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "creatomate-callback",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -784,
+        -464
+      ],
+      "id": "317fa9b7-4d2a-4c0e-b32b-fce109cb8c43",
+      "name": "Trigger when video generation succeeds or fails",
+      "webhookId": "e9e6e41d-9847-40d2-add0-40a9de55db87"
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Trigger when video generation succeeds or fails').item.json.body.url.split('/').pop() }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1OjVhG_SgI86sCVLhgMgd6CPKtqA8kcFm",
+          "mode": "list",
+          "cachedResultName": "n8n",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1OjVhG_SgI86sCVLhgMgd6CPKtqA8kcFm"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        112,
+        -256
+      ],
+      "id": "9dc6c109-6f3e-472c-82e6-59b08922cd10",
+      "name": "Upload video to Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "VvQj96JnHy9QqMiS",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "apphL61YGdsvJZwS5",
+          "mode": "list",
+          "cachedResultName": "Auto-Video Creator",
+          "cachedResultUrl": "https://airtable.com/apphL61YGdsvJZwS5"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblU9b7Cpfb1rRIOd",
+          "mode": "list",
+          "cachedResultName": "Logging",
+          "cachedResultUrl": "https://airtable.com/apphL61YGdsvJZwS5/tblU9b7Cpfb1rRIOd"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $('Trigger when video generation succeeds or fails').item.json.body.id }}",
+            "Video Link": "=https://www.youtube.com/watch?v={{ $json.uploadId }}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Chat Input Text",
+              "displayName": "Chat Input Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Article Text",
+              "displayName": "Article Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Extracted Instructions",
+              "displayName": "Extracted Instructions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video Link",
+              "displayName": "Video Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video Script",
+              "displayName": "Video Script",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        -464
+      ],
+      "id": "f7952cb2-0b1e-45a0-83de-d24d117ea673",
+      "name": "Update Airtable Logs",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "YMAni5beO8zsEa0H",
+          "name": "Uche's Airtable OAuth Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "apphL61YGdsvJZwS5",
+          "mode": "list",
+          "cachedResultName": "Auto-Video Creator",
+          "cachedResultUrl": "https://airtable.com/apphL61YGdsvJZwS5"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblU9b7Cpfb1rRIOd",
+          "mode": "list",
+          "cachedResultName": "Logging",
+          "cachedResultUrl": "https://airtable.com/apphL61YGdsvJZwS5/tblU9b7Cpfb1rRIOd"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $('Generate Video with Creatomate').item.json.id }}",
+            "Chat Input Text": "=URL: {{ $('Select Pending Rows').item.json.fields['Blog URL'] }}\nText: {{ $('Select Pending Rows').item.json.fields['Blog Text'] }}\nContext: {{ $('Select Pending Rows').item.json.fields.Context }}",
+            "Extracted Instructions": "={{ $('Merge').item.json.instruction }}",
+            "Article Text": "={{ $('Merge').item.json.text }}",
+            "Video Script": "={{ $json.script }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Chat Input Text",
+              "displayName": "Chat Input Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Article Text",
+              "displayName": "Article Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Extracted Instructions",
+              "displayName": "Extracted Instructions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video Link",
+              "displayName": "Video Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video Script",
+              "displayName": "Video Script",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1744,
+        112
+      ],
+      "id": "61cccf0e-f44d-4d23-adc6-a51b117766b2",
+      "name": "Log data in Airtable",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "YMAni5beO8zsEa0H",
+          "name": "Uche's Airtable OAuth Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9e2fd857-05f8-47b3-9ef3-3e369779ba95",
+              "name": "script",
+              "value": "=Scene 1: {{ $('Parse LLM Output').item.json.scene_1 }}\n\nImage Prompt 1: {{ $('Parse LLM Output').item.json.prompt_1 }}\n\n\nScene 2: {{ $('Parse LLM Output').item.json.scene_2 }}\n\nImage Prompt 2: {{ $('Parse LLM Output').item.json.prompt_2 }}\n\n\nScene 3: {{ $('Parse LLM Output').item.json.scene_3 }}\n\nImage Prompt 3: {{ $('Parse LLM Output').item.json.prompt_3 }}\n\n\nScene 4: {{ $('Parse LLM Output').item.json.scene_4 }}\n\nImage Prompt 4: {{ $('Parse LLM Output').item.json.prompt_4 }}\n\n\nTitle: {{ $('Parse LLM Output').item.json.title }}\n\nDescription: {{ $('Parse LLM Output').item.json.description }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1520,
+        112
+      ],
+      "id": "df60bc49-f3c1-4a26-beb8-e204114ad153",
+      "name": "Assemble Video Script"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "authentication": "airtableOAuth2Api",
+        "baseId": {
+          "__rl": true,
+          "value": "https://airtable.com/apphL61YGdsvJZwS5/tblWzIl484fA8ekzH/viwAad2LARgFlFVW9?blocks=hide",
+          "mode": "url"
+        },
+        "tableId": {
+          "__rl": true,
+          "value": "https://airtable.com/apphL61YGdsvJZwS5/tblWzIl484fA8ekzH/viwAad2LARgFlFVW9?blocks=hide",
+          "mode": "url"
+        },
+        "triggerField": "Last Modified Time",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        112
+      ],
+      "id": "3c0dfaed-9f89-4bd9-aef8-8883591aa4f6",
+      "name": "Airtable Trigger",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "YMAni5beO8zsEa0H",
+          "name": "Uche's Airtable OAuth Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ebc97d18-ff2a-448a-8a39-ff098e27a6eb",
+              "leftValue": "={{ $json.fields.Processed }}",
+              "rightValue": "Pending",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -768,
+        112
+      ],
+      "id": "8a59eabf-bf87-4835-9c7c-761d952883cc",
+      "name": "Select Pending Rows"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "apphL61YGdsvJZwS5",
+          "mode": "list",
+          "cachedResultName": "Auto-Video Creator",
+          "cachedResultUrl": "https://airtable.com/apphL61YGdsvJZwS5"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblWzIl484fA8ekzH",
+          "mode": "list",
+          "cachedResultName": "Input",
+          "cachedResultUrl": "https://airtable.com/apphL61YGdsvJZwS5/tblWzIl484fA8ekzH"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Extract metadata').item.json.airtable_id }}",
+            "Processed": "Done"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Blog URL",
+              "displayName": "Blog URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Blog Text",
+              "displayName": "Blog Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Context",
+              "displayName": "Context",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Processed",
+              "displayName": "Processed",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Modified Time",
+              "displayName": "Last Modified Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        -624
+      ],
+      "id": "62709ae8-c9dc-434e-ace4-52eb5168e6e2",
+      "name": "Mark Input as Processed",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "YMAni5beO8zsEa0H",
+          "name": "Uche's Airtable OAuth Account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Airtable Trigger": [
+      {
+        "json": {
+          "id": "recVix1vTlffFWccL",
+          "createdTime": "2025-10-20T12:29:22.000Z",
+          "fields": {
+            "Blog URL": "https://www.mckinsey.com/about-us/new-at-mckinsey-blog/ai-agents-at-scale-a-data-scientists-journey-to-transform-clients-with-tech",
+            "Context": "Fine tune for a non technical audience ages 50-65",
+            "Processed": "Pending",
+            "Last Modified Time": "2025-10-22T07:02:20.000Z"
+          }
+        }
+      }
+    ],
+    "Trigger when video generation succeeds or fails": [
+      {
+        "json": {
+          "headers": {
+            "host": "divverse-community.app.n8n.cloud",
+            "user-agent": "node-fetch/1.0 (+https://github.com/bitinn/node-fetch)",
+            "content-length": "2608",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "44.250.106.204",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "99274082b037054d-PDX",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "44.250.106.204, 104.23.160.218",
+            "x-forwarded-host": "divverse-community.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-45-5cf4858c8f-tn64s",
+            "x-is-trusted": "yes",
+            "x-real-ip": "44.250.106.204"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "8123dc94-a9c1-4d1b-834b-67547dd66917",
+            "status": "failed",
+            "error_message": "Stability AI returned an error message: {\"errors\":[\"You lack sufficient credits to make this request.  Please purchase more credits at https://platform.stability.ai/account/credits and try again.\"],\"id\":\"44841f909a3b54e710d2b41fc8684505\",\"name\":\"payment_required\"}",
+            "url": "https://f002.backblazeb2.com/file/creatomate-c8xg3hsxdu/8123dc94-a9c1-4d1b-834b-67547dd66917.mp4",
+            "snapshot_url": "https://f002.backblazeb2.com/file/creatomate-c8xg3hsxdu/8123dc94-a9c1-4d1b-834b-67547dd66917-snapshot.jpg",
+            "template_id": "2a779e9c-2bee-4522-9893-cd0a2652a2de",
+            "template_name": "Short-Form Voice Over",
+            "template_tags": [],
+            "output_format": "mp4",
+            "modifications": {
+              "Image-1.source": "a data scientist working on a computer with multiple screens displaying code",
+              "Image-2.source": "a digital factory floor with different AI agents working together, represented by different machines or robots",
+              "Image-3.source": "a visual representation of the different AI agents working together, with a before-and-after comparison of the code",
+              "Image-4.source": "a futuristic representation of AI agents working together, with a subtle background of code or digital elements",
+              "Voiceover-1.source": "Meet Emily Sagar-Jones, a principal data scientist at QuantumBlack, AI by McKinsey, who builds AI solutions to solve complex business problems. She shares her journey into the world of machine learning and AI.",
+              "Voiceover-2.source": "Emily's work on 'Agents at Scale' involves building a factory of AI agents that work together to automate complex processes. She explains how these agents were used to modernize a client's legacy COBOL mainframe.",
+              "Voiceover-3.source": "The AI agents worked together seamlessly, with each agent having a clear role, to re-architect 15,000 lines of COBOL code into under 1,000 lines of modern Java, achieving over 90 percent accuracy.",
+              "Voiceover-4.source": "As AI continues to evolve, Emily discusses the future of agentic systems, including the potential for single 'master agents' and the importance of building trust and ensuring safety and interoperability."
+            },
+            "webhook_url": "https://divverse-community.app.n8n.cloud/webhook/creatomate-callback",
+            "metadata": "{\"title\": \"Revolutionizing Business with AI: The Power of Agents at Scale\", \"description\": \"Discover how AI is transforming businesses with 'Agents at Scale'. Learn about the journey of a principal data scientist at QuantumBlack, AI by McKinsey. #AI #QuantumBlack #McKinsey #MachineLearning #DigitalTransformation\", \"airtable_id\": \"recVix1vTlffFWccL\"}"
+          },
+          "webhookUrl": "https://divverse-community.app.n8n.cloud/webhook/creatomate-callback",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if a URL is provided": {
+      "main": [
+        [
+          {
+            "node": "Apify Web Scraper",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Standardize Direct Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify Web Scraper": {
+      "main": [
+        [
+          {
+            "node": "Standardize Apify Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Video Script": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Generate Video Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Standardize Apify Output": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Standardize Direct Input": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Video Script",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Check if a URL is provided",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Output": {
+      "main": [
+        [
+          {
+            "node": "Generate Video with Creatomate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Video with Creatomate": {
+      "main": [
+        [
+          {
+            "node": "Assemble Video Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video generation failed?": {
+      "main": [
+        [
+          {
+            "node": "Alert on failure",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download video": {
+      "main": [
+        [
+          {
+            "node": "Upload Video to YouTube",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload video to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract metadata": {
+      "main": [
+        [
+          {
+            "node": "Video generation failed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger when video generation succeeds or fails": {
+      "main": [
+        [
+          {
+            "node": "Extract metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Video to YouTube": {
+      "main": [
+        [
+          {
+            "node": "Update Airtable Logs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Mark Input as Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Video Script": {
+      "main": [
+        [
+          {
+            "node": "Log data in Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Airtable Logs": {
+      "main": [
+        []
+      ]
+    },
+    "Airtable Trigger": {
+      "main": [
+        [
+          {
+            "node": "Select Pending Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Pending Rows": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "e609c5aa-1098-4a4d-86bc-009c637c2da5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "CpvVxh66B1vnW8vQ",
+  "tags": []
+}

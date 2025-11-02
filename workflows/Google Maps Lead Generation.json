@@ -1,0 +1,1543 @@
+{
+  "name": "Google Maps Lead Generation",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "formId": "Mzz8wmmW"
+      },
+      "type": "n8n-nodes-base.typeformTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7f7369ba-f572-4992-a3a6-dcdf78bf3973",
+      "name": "Typeform Trigger",
+      "webhookId": "90ebc687-998b-40e6-ac8b-b27a424069c4",
+      "credentials": {
+        "typeformOAuth2Api": {
+          "id": "gWJ2r30bbrpusLbR",
+          "name": "Typeform account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=apify_api_VXQjlVmqWiSQAJwN84taju9HQ1Mczq1fJgV3",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"includeWebResults\": false,\n    \"language\": \"en\",\n    \"locationQuery\": \"\",\n    \"maxCrawledPlacesPerSearch\": 50,\n    \"maxImages\": 0,\n    \"maximumLeadsEnrichmentRecords\": 0,\n    \"scrapeContacts\": false,\n    \"scrapeDirectories\": false,\n    \"scrapeImageAuthors\": false,\n    \"scrapePlaceDetailPage\": false,\n    \"scrapeReviewsPersonalData\": true,\n    \"scrapeTableReservationProvider\": false,\n    \"searchStringsArray\": [\n        \"{{ $json.Keywords }}\"\n    ],\n    \"skipClosedPlaces\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "dada7cd3-4594-47d5-9d4f-b6a8aa82540d",
+      "name": "Search Google Maps Through Apify"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f39329f5-f04f-4570-944d-26821ba232e8",
+              "leftValue": "={{ $json.permanentlyClosed }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "bde5b092-8a36-42c7-817d-f56a4d5848de",
+              "leftValue": "={{ $json.temporarilyClosed }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "4993600c-e110-4ed2-b96e-cd079008a9cd",
+      "name": "Remove Closed Businesses"
+    },
+    {
+      "parameters": {
+        "jsCode": "/*\n🟢 Lead Scoring Logic\n\n- Base Score = (Rating × 10) + (log(Reviews+1) × 5)\n- Bonuses:\n  +10 if has website\n  +10 if has phone\n  +5 if has price info\n- Penalty:\n  –50 if closed (permanent/temporary)\n\n🏷 Lead Tier\n- Hot ≥ 70\n- Warm 40–69\n- Cold < 40\n\n🎯 Easy Target\n- True if business is unclaimed AND has no website\n- False otherwise\n\n📊 Normalized Score\n- Lead score scaled 0–100 relative to max score in this batch\n\n📝 Explanation\n- Human-readable list of factors (e.g. \"Strong rating; High review count; Has website; Has phone\")\n*/\n\n // Loop over input items and calculate lead score + flags + tiers + normalized score + explanation\nconst items = $input.all();\n\n// Find max raw score across this batch\nlet maxScore = 0;\nfor (const item of items) {\n  const data = item.json;\n\n  const rating = parseFloat(data.totalScore || 0);\n  const reviews = parseInt(data.reviewsCount || 0, 10);\n  const hasWebsite = !!data.website;\n  const hasPhone = !!data.phoneUnformatted;\n  const price = data.price ? 1 : 0;\n  const isClosed = data.permanentlyClosed || data.temporarilyClosed;\n\n  let score = 0;\n  score += rating * 10;\n  score += Math.log(reviews + 1) * 5;\n  if (hasWebsite) score += 10;\n  if (hasPhone) score += 10;\n  if (price) score += 5;\n  if (isClosed) score -= 50;\n\n  if (score > maxScore) maxScore = score;\n\n  // store temporary values for 2nd pass\n  data._tempScore = score;\n  data._tempFactors = { rating, reviews, hasWebsite, hasPhone, price, isClosed };\n}\n\n// Second pass: assign final fields\nfor (const item of items) {\n  const data = item.json;\n\n  const rawScore = data._tempScore;\n  const factors = data._tempFactors;\n  delete data._tempScore;\n  delete data._tempFactors;\n\n  // Lead tiering\n  let tier = \"Cold\";\n  if (rawScore >= 70) {\n    tier = \"Hot\";\n  } else if (rawScore >= 40) {\n    tier = \"Warm\";\n  }\n\n  // Easy target flag\n  const easyTarget = !data.website && data.claimThisBusiness === false;\n\n  // Normalized score (0–100 scale)\n  const normalizedScore = maxScore > 0 ? Math.round((rawScore / maxScore) * 100) : 0;\n\n  // Build explanation\n  const reasons = [];\n  if (factors.rating >= 4) reasons.push(\"Strong rating\");\n  if (factors.reviews > 50) reasons.push(\"High review count\");\n  if (factors.hasWebsite) reasons.push(\"Has website\");\n  else reasons.push(\"No website\");\n  if (factors.hasPhone) reasons.push(\"Has phone\");\n  if (factors.price) reasons.push(\"Has price info\");\n  if (!factors.hasWebsite && data.claimThisBusiness === false) {\n    reasons.push(\"Unclaimed and missing website\");\n  }\n  if (factors.isClosed) reasons.push(\"Closed business\");\n\n  const explanation = reasons.join(\"; \");\n\n  // Attach new fields\n  data.leadScore = Math.round(rawScore);\n  data.normalizedScore = normalizedScore;\n  data.leadTier = tier;\n  data.easyTarget = easyTarget;\n  data.explanation = explanation;\n\n  item.json = data;\n}\n\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "b286516b-47ea-4754-ab78-40202a28af13",
+      "name": "Lead Scoring"
+    },
+    {
+      "parameters": {
+        "content": "🟢 **Lead Scoring Logic**\n\n* **Base Score** = (Rating × 10) + (log(Reviews+1) × 5)\n* **Bonuses**:\n  +10 if has website\n  +10 if has phone\n  +5 if has price info\n* **Penalty**:\n  –50 if closed (permanent/temporary)\n\n🏷 **Lead Tier**\n\n* Hot ≥ 70\n* Warm 40–69\n* Cold < 40\n\n🎯 **Easy Target**\n\n* True if business is **unclaimed AND has no website**\n* False otherwise\n\n📊 **Normalized Score**\n\n* Lead score scaled 0–100 relative to max score in this batch\n\n📝 **Explanation**\n\n* Human-readable list of factors (e.g. *Strong rating; High review count; Has website; Has phone*).",
+        "height": 592,
+        "width": 720,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        208,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "41133ca7-9d60-4a31-82fe-081272cc2f48",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o",
+          "mode": "list",
+          "cachedResultName": "Google Maps Lead Generator",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 226184506,
+          "mode": "list",
+          "cachedResultName": "Lead 2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o/edit#gid=226184506"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $json.title }}",
+            "Category": "={{ $json.categoryName }}",
+            "Address": "={{ $json.address }}",
+            "Neighborhood": "={{ $json.neighborhood }}",
+            "Street": "={{ $json.street }}",
+            "City": "={{ $json.city }}",
+            "Postal Code": "={{ $json.postalCode }}",
+            "State": "={{ $json.state }}",
+            "Country Code": "={{ $json.countryCode }}",
+            "Website": "={{ $json.website }}",
+            "Phone": "={{ $json.phoneUnformatted }}",
+            "Rating": "={{ $json.totalScore }}",
+            "Place ID": "={{ $json.placeId }}",
+            "Reviews Count": "={{ $json.reviewsCount }}",
+            "URL": "={{ $json.url }}",
+            "Lead Score": "={{ $json.leadScore }}",
+            "Normalized Lead Score": "={{ $json.normalizedScore }}",
+            "Lead Tier": "={{ $json.leadTier }}",
+            "Easy Target?": "={{ $json.easyTarget }}",
+            "Lead Score Explanation": "={{ $json.explanation }}"
+          },
+          "matchingColumns": [
+            "Place ID"
+          ],
+          "schema": [
+            {
+              "id": "Place ID",
+              "displayName": "Place ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Neighborhood",
+              "displayName": "Neighborhood",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Street",
+              "displayName": "Street",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Postal Code",
+              "displayName": "Postal Code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Country Code",
+              "displayName": "Country Code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviews Count",
+              "displayName": "Reviews Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Normalized Lead Score",
+              "displayName": "Normalized Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Tier",
+              "displayName": "Lead Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Easy Target?",
+              "displayName": "Easy Target?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Score Explanation",
+              "displayName": "Lead Score Explanation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Opening Hours (Monday)",
+              "displayName": "Opening Hours (Monday)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Opening Hours (Tuesday)",
+              "displayName": "Opening Hours (Tuesday)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Opening Hours (Wednesday)",
+              "displayName": "Opening Hours (Wednesday)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Opening Hours (Thursday)",
+              "displayName": "Opening Hours (Thursday)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Opening Hours (Friday)",
+              "displayName": "Opening Hours (Friday)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Opening Hours (Saturday)",
+              "displayName": "Opening Hours (Saturday)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Opening Hours (Sunday)",
+              "displayName": "Opening Hours (Sunday)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        0
+      ],
+      "id": "a12faea0-7b54-4124-b6e5-290b8e8fca5b",
+      "name": "Save Leads",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QPsmUAFxD8iiWTqC",
+          "name": "Uche's Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json['Lead Tier'] }}",
+                    "rightValue": "Hot",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "959adc4a-6e67-4bb3-ae15-16fb49624c94"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Hot Leads"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2e3ee7fa-4cde-430b-a1db-3bf36128cb3e",
+                    "leftValue": "={{ $json['Lead Tier'] }}",
+                    "rightValue": "Warm",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Warm Leads"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "98cee7c0-0096-48bf-add7-0c2e9d664372",
+                    "leftValue": "={{ $json['Lead Tier'] }}",
+                    "rightValue": "Cold",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cold Leads"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1104,
+        -16
+      ],
+      "id": "eba54889-fc89-4533-9efb-1519ef8f7117",
+      "name": "Route By Lead Tier"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Function node: Extract unique companies by website domain\n// Excludes companies without a valid domain\n\nfunction cleanDomain(rawUrl) {\n  if (!rawUrl) return '';\n  let u = String(rawUrl).trim();\n\n  if (!/^https?:\\/\\//i.test(u)) u = 'https://' + u;\n\n  try {\n    const urlObj = new URL(u);\n    return urlObj.hostname.replace(/^www\\./i, '').toLowerCase();\n  } catch (e) {\n    const m = u.match(/^(?:https?:\\/\\/)?(?:www\\.)?([^\\/?#\\s]+)/i);\n    return m ? m[1].toLowerCase() : '';\n  }\n}\n\nconst items = $input.all();\nconst companies = new Map();\n\nfor (const it of items) {\n  const c = it.json;\n\n  const website = c.Website || '';\n  const domain = cleanDomain(website);\n\n  // ✅ Skip if no domain\n  if (!domain) continue;\n\n  // Only keep first occurrence of each domain\n  if (!companies.has(domain)) {\n    companies.set(domain, {\n      Title: c.Title || '',\n      Category: c.Category || '',\n      Address: c.Address || '',\n      Website: website,\n      Domain: domain,\n      Phone: c.Phone || '',\n      Rating: c.Rating || '',\n      ReviewsCount: c['Reviews Count'] || '',\n      LeadScore: c['Lead Score'] || '',\n      LeadTier: c['Lead Tier'] || '',\n      EasyTarget: c['Easy Target?'] || false\n    });\n  }\n}\n\nreturn Array.from(companies.values()).map(company => ({ json: company }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        -160
+      ],
+      "id": "3f92ca02-a0b8-4042-8b80-8b5f9c167030",
+      "name": "Extract Unique Companies by Website Domain"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o",
+          "mode": "list",
+          "cachedResultName": "Google Maps Lead Generator",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1063502844,
+          "mode": "list",
+          "cachedResultName": "Unique Companies",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o/edit#gid=1063502844"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Domain": "={{ $json.Domain }}",
+            "Name": "={{ $json.Title }}",
+            "Website": "={{ $json.Website }}",
+            "Category": "={{ $json.Category }}",
+            "Address": "={{ $json.Address }}",
+            "Phone": "={{ $json.Phone }}",
+            "Rating": "={{ $json.Rating }}",
+            "Reviews Count": "={{ $json.ReviewsCount }}",
+            "Lead Score": "={{ $json.LeadScore }}",
+            "Lead Tier": "={{ $json.LeadTier }}"
+          },
+          "matchingColumns": [
+            "Domain"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Domain",
+              "displayName": "Domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviews Count",
+              "displayName": "Reviews Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Tier",
+              "displayName": "Lead Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1696,
+        -192
+      ],
+      "id": "cc9ae67c-6900-4149-829b-f294b0c29ae8",
+      "name": "Add Unique Companies",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QPsmUAFxD8iiWTqC",
+          "name": "Uche's Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1000,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2096,
+        -192
+      ],
+      "id": "9c1cc2e8-8be9-4b7e-82bb-0b2de66384fc",
+      "name": "Loop Over Items (1000 per Batch)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2592,
+        -208
+      ],
+      "id": "4ca829d0-a026-4b3e-a67a-89f4d5067ec7",
+      "name": "Apollo Find Decision Makers",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "zW1Cd6dACM5e4IVJ",
+          "name": "DivVerse Apollo Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const baseUrl = 'https://api.apollo.io/api/v1/mixed_people/search';\n\n// Seniorities\nconst seniorities = ['owner', 'founder', 'c_suite', 'partner', 'vp', 'head', 'director'];\nconst seniorityParams = seniorities\n  .map(s => `person_seniorities[]=${encodeURIComponent(s)}`)\n  .join('&');\n\n// Domains\nconst domains = $input.all().map(item => item.json.Domain);\nconst domainParams = domains\n  .map(d => `q_organization_domains_list[]=${encodeURIComponent(d)}`)\n  .join('&');\n\n// Departments\nconst departments = ['c_suite', 'master_human_resources'];\nconst departmentParams = departments\n  .map(dep => `personDepartmentOrSubdepartments[]=${encodeURIComponent(dep)}`)\n  .join('&');\n\n// Pagination\nconst perPageParam = 'per_page=100';\n\n// Build full URL\nconst fullUrl = `${baseUrl}?${seniorityParams}&${domainParams}&${departmentParams}&${perPageParam}`;\n\nreturn [{ json: { url: fullUrl } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2416,
+        -208
+      ],
+      "id": "7333d5f9-2415-439c-b4ab-4f931efa75f8",
+      "name": "Create Apollo People Search URL"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "people",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2848,
+        -64
+      ],
+      "id": "6e8226a8-6932-4e0d-8385-f6d47174f074",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        3168,
+        -400
+      ],
+      "id": "2e5ef351-6a20-4e6e-93f5-96e14958939d",
+      "name": "Loop Over Items For Bulk Enrichment (10 per batch)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/api/v1/people/bulk_match?reveal_personal_emails=true",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3616,
+        -304
+      ],
+      "id": "a98a107b-83c3-4951-af70-694bc637c6a5",
+      "name": "Apollo Enrich Decision Makers",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "zW1Cd6dACM5e4IVJ",
+          "name": "DivVerse Apollo Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const details = $input.all().map(item => {\n  return {\n    id: item.json['Apollo Person ID'] || undefined,\n    name: item.json['Name'] || undefined,\n    linkedin_url: item.json['LinkedIn Profile URL'] || undefined,\n    domain: item.json['Company Domain'] || undefined,\n  };\n});\n\n// Remove any undefined values so the payload stays clean\nconst cleanedDetails = details.map(d => {\n  return Object.fromEntries(Object.entries(d).filter(([_, v]) => v));\n});\n\nreturn [\n  {\n    json: {\n      details: cleanedDetails,\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3392,
+        -352
+      ],
+      "id": "9171d2dd-7c68-4030-9ce5-f84b68ead11a",
+      "name": "Create Apollo People Enrichment Payload"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "matches",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        3392,
+        -544
+      ],
+      "id": "ccba3051-6e1c-4ea2-a913-68317fe6b4c4",
+      "name": "Split Out Batched Enrichment Response",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o",
+          "mode": "list",
+          "cachedResultName": "Google Maps Lead Generator",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 652992760,
+          "mode": "list",
+          "cachedResultName": "Contacts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o/edit#gid=652992760"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Apollo Person ID": "={{ $json.id }}",
+            "Name": "={{ $json.name }}",
+            "Job Title": "={{ $json.title }}",
+            "Company": "={{ $json.organization.name }}",
+            "Contact Details Processed": "Pending",
+            "Company Domain": "={{ $json.organization.primary_domain }}",
+            "LinkedIn Profile URL": "={{ $json.linkedin_url }}",
+            "City": "={{ $json.city }}",
+            "State": "={{ $json.state }}",
+            "Country": "={{ $json.country }}",
+            "Date Added": "={{ $now.toUTC().toFormat('yyyy-MM-dd') }}"
+          },
+          "matchingColumns": [
+            "Apollo Person ID"
+          ],
+          "schema": [
+            {
+              "id": "Apollo Person ID",
+              "displayName": "Apollo Person ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Job Title",
+              "displayName": "Job Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn Profile URL",
+              "displayName": "LinkedIn Profile URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Domain",
+              "displayName": "Company Domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Employee Count",
+              "displayName": "Employee Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Address",
+              "displayName": "Email Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Verified",
+              "displayName": "Email Verified",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Added",
+              "displayName": "Date Added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact Details Processed",
+              "displayName": "Contact Details Processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2736,
+        -400
+      ],
+      "id": "ae82991b-e0c0-4614-b331-1c21c34c4c9b",
+      "name": "Add New Contacts",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QPsmUAFxD8iiWTqC",
+          "name": "Uche's Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "Apollo Person ID",
+              "field2": "id"
+            }
+          ]
+        },
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2560,
+        -400
+      ],
+      "id": "3350de39-8e1c-43e0-aa85-4b1ba5cca503",
+      "name": "Exclude Existing Contacts"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o",
+          "mode": "list",
+          "cachedResultName": "Google Maps Lead Generator",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 652992760,
+          "mode": "list",
+          "cachedResultName": "Contacts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o/edit#gid=652992760"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2352,
+        -512
+      ],
+      "id": "99a0c6af-53f1-4e09-9d99-b112a2913295",
+      "name": "Get Processed Contacts",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QPsmUAFxD8iiWTqC",
+          "name": "Uche's Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o",
+          "mode": "list",
+          "cachedResultName": "Google Maps Lead Generator",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 652992760,
+          "mode": "list",
+          "cachedResultName": "Contacts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I6BX0LywJ8CZKz4AOhzvZ5oNGyQEzmiCcSBl3FJFQ9o/edit#gid=652992760"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Apollo Person ID": "={{ $json.id }}",
+            "Contact Details Processed": "Done",
+            "Employee Count": "={{ $json.organization.estimated_num_employees }}",
+            "Email Address": "={{ $json.email }}",
+            "Email Verified": "={{ $json.email_status === 'verified' ? 'Yes' : 'No' }}"
+          },
+          "matchingColumns": [
+            "Apollo Person ID"
+          ],
+          "schema": [
+            {
+              "id": "Apollo Person ID",
+              "displayName": "Apollo Person ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Job Title",
+              "displayName": "Job Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn Profile URL",
+              "displayName": "LinkedIn Profile URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Domain",
+              "displayName": "Company Domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Employee Count",
+              "displayName": "Employee Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Address",
+              "displayName": "Email Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Verified",
+              "displayName": "Email Verified",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Added",
+              "displayName": "Date Added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact Details Processed",
+              "displayName": "Contact Details Processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3616,
+        -544
+      ],
+      "id": "9f2741ab-1f2d-4910-9c8c-6563d356e5c5",
+      "name": "Enrich Contacts",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QPsmUAFxD8iiWTqC",
+          "name": "Uche's Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        2960,
+        -400
+      ],
+      "id": "a9d8c503-7166-4a87-bc51-d64f48b693c4",
+      "name": "Limit"
+    }
+  ],
+  "pinData": {
+    "Typeform Trigger": [
+      {
+        "json": {
+          "Keywords": "hotels in ikeja lagos"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Typeform Trigger": {
+      "main": [
+        [
+          {
+            "node": "Search Google Maps Through Apify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Google Maps Through Apify": {
+      "main": [
+        [
+          {
+            "node": "Remove Closed Businesses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Closed Businesses": {
+      "main": [
+        [
+          {
+            "node": "Lead Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Scoring": {
+      "main": [
+        [
+          {
+            "node": "Save Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Leads": {
+      "main": [
+        [
+          {
+            "node": "Route By Lead Tier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route By Lead Tier": {
+      "main": [
+        [
+          {
+            "node": "Extract Unique Companies by Website Domain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        []
+      ]
+    },
+    "Extract Unique Companies by Website Domain": {
+      "main": [
+        [
+          {
+            "node": "Add Unique Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Unique Companies": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items (1000 per Batch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items (1000 per Batch)": {
+      "main": [
+        [
+          {
+            "node": "Get Processed Contacts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Exclude Existing Contacts",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Create Apollo People Search URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apollo Find Decision Makers": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Apollo People Search URL": {
+      "main": [
+        [
+          {
+            "node": "Apollo Find Decision Makers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items (1000 per Batch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items For Bulk Enrichment (10 per batch)": {
+      "main": [
+        [
+          {
+            "node": "Split Out Batched Enrichment Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Apollo People Enrichment Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apollo Enrich Decision Makers": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items For Bulk Enrichment (10 per batch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Apollo People Enrichment Payload": {
+      "main": [
+        [
+          {
+            "node": "Apollo Enrich Decision Makers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out Batched Enrichment Response": {
+      "main": [
+        [
+          {
+            "node": "Enrich Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add New Contacts": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exclude Existing Contacts": {
+      "main": [
+        [
+          {
+            "node": "Add New Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Processed Contacts": {
+      "main": [
+        [
+          {
+            "node": "Exclude Existing Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Contacts": {
+      "main": [
+        []
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items For Bulk Enrichment (10 per batch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ea39215b-3060-4150-b011-eef182389616",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "1CQ6fmEHIxF3j6Hw",
+  "tags": []
+}

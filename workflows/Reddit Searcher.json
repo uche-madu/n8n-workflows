@@ -1,0 +1,561 @@
+{
+  "name": "Reddit Searcher",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1584,
+        144
+      ],
+      "id": "b0b7a7cf-256f-44ac-8003-fa50d75f0aa8",
+      "name": "When chat message received",
+      "webhookId": "11cbff08-2254-4ebc-9220-729809c60616"
+    },
+    {
+      "parameters": {
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a query preprocessor for Reddit search.\n\nConvert the user's message into a very short query string:\n\n- Extract the main subject and object.\n- Replace “looking for” or “searching for” with “hiring.”\n- Order as: subject, action, object.\n- Output only the final keywords, separated by spaces.\n\nExample:\nUser: \"I'm looking for a developer for my startup\"\n→ startup hiring developer\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -1360,
+        144
+      ],
+      "id": "2651b615-d5da-410f-bb7b-a1ac879beb0e",
+      "name": "Reddit Search Query Optimizer"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "location": "allReddit",
+        "keyword": "={{ $json.text }}",
+        "returnAll": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        144
+      ],
+      "id": "5bcd4190-0191-4a1e-a236-2cfbb987dad1",
+      "name": "Reddit Search",
+      "credentials": {
+        "redditOAuth2Api": {
+          "id": "ByLIYpUFEPutLk6i",
+          "name": "Uche Reddit"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -1264,
+        368
+      ],
+      "id": "7bab3c68-6d4c-4d67-9284-f0d76af1d285",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "4gqanI5K9izarRWa",
+          "name": "Groq account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Post ID: {{ $json.id }}\n\nPost (selftext): {{ $json.selftext }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a Reddit Comment Generator.\n\nYour task is to write concise, thoughtful, and relevant comments in response to Reddit posts.\n\nEach comment should contribute meaningfully to the discussion—whether by offering insight, support, a different perspective, or a helpful suggestion. Keep your tone natural, friendly, and human. Avoid sounding generic, robotic, or promotional.\n\nFocus solely on generating the comment. Do not include any explanation, context, or formatting outside the comment itself. Always keep Reddit's community guidelines in mind."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -544,
+        272
+      ],
+      "id": "8e7feccc-d7aa-46fb-8718-57f90e3eea09",
+      "name": "Comment Generator",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "resource": "postComment",
+        "postId": "={{ $json.output.post_id }}",
+        "commentText": "={{ $json.output.comment }}"
+      },
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [
+        64,
+        240
+      ],
+      "id": "69288435-5c38-4210-a119-ee7e222b2b34",
+      "name": "Post Reddit Comment",
+      "alwaysOutputData": false,
+      "credentials": {
+        "redditOAuth2Api": {
+          "id": "ByLIYpUFEPutLk6i",
+          "name": "Uche Reddit"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"post_id\": \"abc123\", \n  \"comment\": \"I completely agree with your point. Have you considered exploring this further?\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        480
+      ],
+      "id": "69ab9ce3-85d8-406f-b607-85d40fb526bb",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        480
+      ],
+      "id": "6f999082-9ae4-4847-9f0b-6fb864887c74",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "4gqanI5K9izarRWa",
+          "name": "Groq account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -160,
+        320
+      ],
+      "id": "79b2c768-8a1a-4f9a-9d81-87396cc4263a",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1633e2fc-a76b-46f0-9230-ed17323975cc",
+              "leftValue": "={{ $json.selftext }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "8624a2c2-4a5c-432b-835c-acc8ee2f5d23",
+              "leftValue": "={{ DateTime.fromMillis($json[\"created_utc\"] * 1000).toFormat('yyyy-MM-dd HH:mm:ss') }}",
+              "rightValue": "2025-04-09T00:00:00",
+              "operator": {
+                "type": "dateTime",
+                "operation": "afterOrEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -768,
+        144
+      ],
+      "id": "e505748c-5fef-4d8f-9649-18890ff51b98",
+      "name": "Select Posts Since April 1, 2025"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "id",
+              "field2": "output.post_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -160,
+        -48
+      ],
+      "id": "cec372d3-3830-47c9-a923-259b2739f4f2",
+      "name": "Merge Posts with Generated Comments"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1OpyXjrMTWM9N4UOr06QD7ztHtMTCKkDr89ymFIfp3js",
+          "mode": "list",
+          "cachedResultName": "Reddit",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpyXjrMTWM9N4UOr06QD7ztHtMTCKkDr89ymFIfp3js/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Reddit Posts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OpyXjrMTWM9N4UOr06QD7ztHtMTCKkDr89ymFIfp3js/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Subreddit": "={{ $json.subreddit }}",
+            "Title": "={{ $json.title }}",
+            "Post": "={{ $json.selftext }}",
+            "Permalink": "={{ $json.permalink }}",
+            "Post Link": "={{ $json.url }}",
+            "Subreddit Subscribers": "={{ $json.subreddit_subscribers }}",
+            "Time Posted (UTC)": "={{ DateTime.fromMillis($json[\"created_utc\"] * 1000).toFormat('yyyy-MM-dd HH:mm:ss') }}",
+            "Post ID": "={{ $json.id }}",
+            "Number of Comments": "={{ $json.num_comments }}",
+            "Generated Comment": "={{ $json.output.comment }}"
+          },
+          "matchingColumns": [
+            "Post ID"
+          ],
+          "schema": [
+            {
+              "id": "Subreddit",
+              "displayName": "Subreddit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post",
+              "displayName": "Post",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Permalink",
+              "displayName": "Permalink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Number of Comments",
+              "displayName": "Number of Comments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post Link",
+              "displayName": "Post Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post ID",
+              "displayName": "Post ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subreddit Subscribers",
+              "displayName": "Subreddit Subscribers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Time Posted (UTC)",
+              "displayName": "Time Posted (UTC)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Generated Comment",
+              "displayName": "Generated Comment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        64,
+        -48
+      ],
+      "id": "b393d441-ecb0-4664-9456-f8cd85e159f0",
+      "name": "Scraped Posts with Generated Comments",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QPsmUAFxD8iiWTqC",
+          "name": "Uche's Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        320
+      ],
+      "id": "2ec53035-58a6-49bd-83a6-16da8ec23ddd",
+      "name": "Wait 10 minutes before next comment",
+      "webhookId": "b45dd5ac-4bd2-4bf0-8a65-2829fa6156c6"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Reddit Search Query Optimizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit Search Query Optimizer": {
+      "main": [
+        [
+          {
+            "node": "Reddit Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit Search": {
+      "main": [
+        [
+          {
+            "node": "Select Posts Since April 1, 2025",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Reddit Search Query Optimizer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comment Generator": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Posts with Generated Comments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Post Reddit Comment": {
+      "main": [
+        [
+          {
+            "node": "Wait 10 minutes before next comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Comment Generator",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Comment Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Post Reddit Comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Posts Since April 1, 2025": {
+      "main": [
+        [
+          {
+            "node": "Comment Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Posts with Generated Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Posts with Generated Comments": {
+      "main": [
+        [
+          {
+            "node": "Scraped Posts with Generated Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 10 minutes before next comment": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9c41172b-ff0d-4ab1-92c2-65726ace53fb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "Hho1HlP9Kb5K49vt",
+  "tags": []
+}

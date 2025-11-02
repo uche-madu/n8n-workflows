@@ -1,0 +1,276 @@
+{
+  "name": "Label Incoming Emails",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        752,
+        432
+      ],
+      "id": "b8af6762-d9a6-49bb-917f-9ce363e4102f",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "4gqanI5K9izarRWa",
+          "name": "Groq account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "label"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        -48
+      ],
+      "id": "35407aef-c8db-478d-98ec-ce4587236987",
+      "name": "Get All Labels From Gmail",
+      "webhookId": "3c2b2067-34d9-4e70-865e-99cb8ae9e9ee",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E6tZSl3afw1qUsqb",
+          "name": "Uche's Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Retrieve Full Message').item.json.id }}",
+        "labelIds": "={{ $json.labelId }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1264,
+        208
+      ],
+      "id": "a89bbd4a-37ec-438e-b8f2-5a06df90696e",
+      "name": "Label Message",
+      "webhookId": "51a61cd6-c9e5-40f3-a192-7b9d51ae83e0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E6tZSl3afw1qUsqb",
+          "name": "Uche's Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  const html = item.json.html || '';\n\n  const plainText = html\n    .replace(/<script[\\s\\S]*?>[\\s\\S]*?<\\/script>/gi, '')  // Remove <script> tags\n    .replace(/<style[\\s\\S]*?>[\\s\\S]*?<\\/style>/gi, '')    // Remove <style> tags\n    .replace(/<[^>]+>/g, '')                              // Strip remaining HTML tags\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&amp;/gi, '&')\n    .replace(/&lt;/gi, '<')\n    .replace(/&gt;/gi, '>')\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  results.push({\n    json: {\n      ...item.json,\n      plainText,\n    }\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        208
+      ],
+      "id": "3f6c5d3a-7b9a-4710-978a-6008df8e109a",
+      "name": "Parse Full HTML Message"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "simple": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        208
+      ],
+      "id": "586bf96b-718d-49cf-895d-d05310e6939c",
+      "name": "Retrieve Full Message",
+      "webhookId": "7a6ff882-8da5-4b67-b702-8f165fc1e9c3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E6tZSl3afw1qUsqb",
+          "name": "Uche's Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        208
+      ],
+      "id": "a33c4177-81cc-48bf-a857-8819c04b03ea",
+      "name": "Trigger When New is Received",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E6tZSl3afw1qUsqb",
+          "name": "Uche's Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Email Body: {{ $json.plainText }}\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an experienced virtual assistant that classifies emails into one or more of the following categories:\n- Notification\n- Career\n- Financial\n- Meeting/Calendar\n- Personal\n- Promotions\n- Action Required\n- Work\n- Other\n\n\n📤 Output format:\nReturn a JSON array of strings, where each string is a category name. For example:\n\n[\n  \"Notification\",\n  \"Action Required\"\n]\nOnly include categories that apply to the email. Do not include explanations — just the array.\n\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        672,
+        208
+      ],
+      "id": "0a13cae4-d6ab-478a-add6-512518eac0e2",
+      "name": "Categorize Email"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define your category-to-labelId mapping\nconst labelMap = {\n  \"Notification\": \"Label_4971994154451392995\",\n  \"Career\": \"Label_6032386755268007605\",\n  \"Financial\": \"Label_946014316663262013\",\n  \"Meeting/Calendar\": \"Label_8145743175589876700\",\n  \"Personal\": \"Label_8491460420312089904\",\n  \"Promotions\": \"Label_6467285907532330962\",\n  \"Action Required\": \"Label_4193482637821948451\",\n  \"Work\": \"Label_5211331192873469990\",\n  \"Other\": \"Label_2786884171487114744\"\n};\n\nconst results = [];\n\nfor (const item of $input.all()) {\n  try {\n    const categories = JSON.parse(item.json.text);\n    const labelIds = categories.map(cat => labelMap[cat] || null).filter(Boolean);\n    results.push({\n      json: {\n        category: categories,\n        labelId: labelIds,\n      }\n    });\n  } catch (err) {\n    results.push({ json: { category: [], labelId: [], error: 'Failed to parse categories' } });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        208
+      ],
+      "id": "5fa827e1-ba61-40a8-954f-7567e9d2c5da",
+      "name": "Parse LLM Categories"
+    }
+  ],
+  "pinData": {
+    "Trigger When New is Received": [
+      {
+        "json": {
+          "id": "19782c8fa5ba212c",
+          "threadId": "19782c8fa5ba212c",
+          "snippet": "n8n.cloud was granted access to your Google Account dreemer6.um@gmail.com If you did not grant access, you should check this activity and secure your account. Check activity You can also see security",
+          "payload": {
+            "mimeType": "multipart/alternative"
+          },
+          "sizeEstimate": 12101,
+          "historyId": "6689137",
+          "internalDate": "1750245898000",
+          "labels": [
+            {
+              "id": "INBOX",
+              "name": "INBOX"
+            },
+            {
+              "id": "CATEGORY_UPDATES",
+              "name": "CATEGORY_UPDATES"
+            },
+            {
+              "id": "UNREAD",
+              "name": "UNREAD"
+            }
+          ],
+          "Subject": "Security alert",
+          "From": "Google <no-reply@accounts.google.com>",
+          "To": "dreemer6.um@gmail.com"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Categorize Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Full HTML Message": {
+      "main": [
+        [
+          {
+            "node": "Categorize Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Full Message": {
+      "main": [
+        [
+          {
+            "node": "Parse Full HTML Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger When New is Received": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Full Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorize Email": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Categories": {
+      "main": [
+        [
+          {
+            "node": "Label Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7cf74e89-ff0d-4612-9261-54d522d6f81a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "5PC5GRzE9QdbmL34",
+  "tags": []
+}

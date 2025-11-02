@@ -1,0 +1,657 @@
+{
+  "name": "Fetch 3MTT LinkedIn Posts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        -96
+      ],
+      "id": "c9adfbbc-570e-4c63-b278-bb2f3fcc7f93",
+      "name": "Run Daily @2am"
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorId": {
+          "__rl": true,
+          "value": "kfiWbq3boy3dWKbiL",
+          "mode": "list",
+          "cachedResultName": "Linkedin post scraper (curious_coder/linkedin-post-search-scraper)",
+          "cachedResultUrl": "https://console.apify.com/actors/kfiWbq3boy3dWKbiL/input"
+        },
+        "customBody": "{\n    \"cookie\": [\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1759481687.766285,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"lms_ads\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"AQFq7mCMUsfikAAAAZkOySPYEcfyVklFc4IAyimys5EE81Qh7FkNtrNHBGG5wu13_NiBk6queVy4pZEL_GtVdyVgRTNxUrk2\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1760946135.719922,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"_guid\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"eba0b76b-f981-4323-a510-8e7fcc3a8e21\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1788437296.173235,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"bcookie\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"\\\"v=2&3045e94a-1a21-4e71-840c-5be211ae25a5\\\"\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1759481687.766521,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"lms_analytics\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"AQFq7mCMUsfikAAAAZkOySPYEcfyVklFc4IAyimys5EE81Qh7FkNtrNHBGG5wu13_NiBk6queVy4pZEL_GtVdyVgRTNxUrk2\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"hostOnly\": false,\n            \"httpOnly\": true,\n            \"name\": \"fptctx2\",\n            \"path\": \"/\",\n            \"sameSite\": null,\n            \"secure\": true,\n            \"session\": true,\n            \"storeId\": null,\n            \"value\": \"taBcrIH61PuCVH7eNCyH0K%252fD9DJ44Cptuv0RyrXgXCtAkWd4Y6i6w5WSC86HSQvzSwc90bjZaqFnMhP2WOmWSHCg3opoSF%252bze3oDe6x5s4Fsle%252fGlvEy0%252bTziaJex6Gf2RMZ%252bPp6F0DNZOPvftBFTwNOpbljIl7IeReLrQ7AqJXmFYbuuGcwhp8pAW5GZuRdViDiLckDq%252fIRP32ciKcRwiVgE8gbbLYx57MUv543syUfTf%252fzsSlEwgIBU7pLGyAMLSESLv9SVm9SbEpVOonWkvy7X3sI8FSe%252ffSxht88MIuBj03mBzSF1tJWwgKou3US060669qy3QtD3yGwsEvVhMKf3B2OGlSzEJhrutDdwu8%253d\"\n        },\n        {\n            \"domain\": \".www.linkedin.com\",\n            \"expirationDate\": 1788097544.354296,\n            \"hostOnly\": false,\n            \"httpOnly\": true,\n            \"name\": \"li_at\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"AQEDASvY1lgA8qPBAAABmBMQ-SoAAAGZH0aIWU0AQ_0sA80L7OGCtDE5juvjDkpPFTL95nGImq-mwb2AjYFFXEeafn9oBaC6GOaKlH8vpdXmVNjMC-W5HTOsRFeVlSGjIPKAdIPk5XMGZg_-OFekeoeR\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"lang\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": true,\n            \"storeId\": null,\n            \"value\": \"v=2&lang=en-us\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1756976087.85041,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"lidc\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"\\\"b=VB36:s=V:r=V:a=V:p=V:g=11183:u=90:x=1:i=1756901299:t=1756976086:v=2:sig=AQE57ZQcePnIyg2kgn_ZIy_z87CoaZ53\\\"\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1759481686.881849,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"AnalyticsSyncHistory\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"AQKPHPbNJpU0cwAAAZkOySAgfvbhK2v-lJ7SDQtcciehs4Tyk7ov4W50Ohkw-jqP7iqVevI3QBkCEdOKbsF4tw\"\n        },\n        {\n            \"domain\": \".www.linkedin.com\",\n            \"expirationDate\": 1788437271.615238,\n            \"hostOnly\": false,\n            \"httpOnly\": true,\n            \"name\": \"bscookie\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"\\\"v=1&20250213121026e465479d-d746-4cfc-813a-dd353e59d3a2AQEd89_DSTkgH9y4baK5B7DHNwL2EXZa\\\"\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1776817147.877789,\n            \"hostOnly\": false,\n            \"httpOnly\": true,\n            \"name\": \"dfpfpt\",\n            \"path\": \"/\",\n            \"sameSite\": null,\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"ab3fce59c86c446a8a44a4c5429f77a9\"\n        },\n        {\n            \"domain\": \".www.linkedin.com\",\n            \"expirationDate\": 1788097544.355032,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"JSESSIONID\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"\\\"ajax:2506536194631793541\\\"\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1772453262.910612,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"li_mc\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"MTsyMTsxNzU2OTAxMjYxOzE7MDIxyjaSzRGL0axFIBPIDbUUjKwdb6Ym8/0HzfzgOYKTeSs=\"\n        },\n        {\n            \"domain\": \".www.linkedin.com\",\n            \"expirationDate\": 1784202535.552732,\n            \"hostOnly\": false,\n            \"httpOnly\": true,\n            \"name\": \"li_rm\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"AQG6kugG3HQ9ewAAAZgTELFSCKZ_nV7SR83LZb5fNOLeEGdfllwAMDl8ObcRgLmsKv3xGn4wes-InwPbpc0laljkkjvKW51ixbhzmagiFRFmcis6CvZ_Dgft\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1764677295.173091,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"li_sugr\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"f0bd1bc0-172f-4d41-a059-9d908ff64abb\"\n        },\n        {\n            \"domain\": \".www.linkedin.com\",\n            \"expirationDate\": 1772453287,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"li_theme\",\n            \"path\": \"/\",\n            \"sameSite\": null,\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"light\"\n        },\n        {\n            \"domain\": \".www.linkedin.com\",\n            \"expirationDate\": 1772453287,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"li_theme_set\",\n            \"path\": \"/\",\n            \"sameSite\": null,\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"app\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1788097544.354866,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"liap\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"true\"\n        },\n        {\n            \"domain\": \".www.linkedin.com\",\n            \"expirationDate\": 1758110886,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"timezone\",\n            \"path\": \"/\",\n            \"sameSite\": null,\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"Africa/Lagos\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1759493289,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"UserMatchHistory\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"AQLJLDiAn1UDEAAAAZkPeigFCbcvtV3m5t6QTm5VgFDpDozulMWnqVlB329fTlbdYTuHvdo4efo15yR2pT8tQzePjn046HmIdaORo_rhK1iOReElF6d-Sfz-8qJUtW8NCuDEidHdfMbyrBCj1W-kdNtSNQBOSnxyvF5ZekZiEqUq5-b147POdRUKodiA0XuQmURoLVhYVgdrnBsABSBm3ku3FQNNPyBRX8t80AYa08A2UPJtNLczJDt6LN6GSfNDduh8fdNFubp_UK_RIHQN0nwNhywZ3zFTbOLCE-WWPemBtNYhOuzdLR_FMbwCerrVxsgQk4O8ANEkXB7noa91xwfmEBNDJnM4RqspR87z-oEbBlYq1A\"\n        },\n        {\n            \"domain\": \".linkedin.com\",\n            \"expirationDate\": 1787226517.903781,\n            \"hostOnly\": false,\n            \"httpOnly\": false,\n            \"name\": \"visit\",\n            \"path\": \"/\",\n            \"sameSite\": \"no_restriction\",\n            \"secure\": true,\n            \"session\": false,\n            \"storeId\": null,\n            \"value\": \"v=1&M\"\n        }\n    ],\n    \"deepScrape\": true,\n    \"maxDelay\": 8,\n    \"minDelay\": 2,\n    \"proxy\": {\n        \"useApifyProxy\": true,\n        \"apifyProxyCountry\": \"US\"\n    },\n    \"rawData\": false,\n    \"urls\": [\n        \"https://www.linkedin.com/search/results/content/?datePosted=%22past-24h%22&keywords=3mtt&origin=FACETED_SEARCH&sid=BtE\"\n    ],\n    \"userAgent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36\"\n}",
+        "timeout": 900,
+        "memory": 512,
+        "authentication": "apifyOAuth2Api"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -96
+      ],
+      "id": "d31f5cab-2e47-4836-9b91-4016b00afec2",
+      "name": "Get 3MTT LinkedIn Stories",
+      "credentials": {
+        "apifyOAuth2Api": {
+          "id": "lJMO9PO2fpbFCA9u",
+          "name": "3MTT Apify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q",
+          "mode": "list",
+          "cachedResultName": "Success Stories",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Linkedin Stories",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status ": "Pending",
+            "URL": "={{ $('Get 3MTT LinkedIn Stories').item.json.url }}",
+            "Post Content": "={{ $('Get 3MTT LinkedIn Stories').item.json.text }}",
+            "Name": "={{ $('Get 3MTT LinkedIn Stories').item.json.authorName }}",
+            "Date": "={{ $('Get 3MTT LinkedIn Stories').item.json.postedAtISO.toDateTime().format('yyyy-MM-dd') }}"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post Content",
+              "displayName": "Post Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Type",
+              "displayName": "Post Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        528,
+        -96
+      ],
+      "id": "2e438728-c034-4fa7-a262-951108db03b6",
+      "name": "Add Posts to LinkedIn Stories Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nAIUxyNbZ3qwnWqX",
+          "name": "Uche Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q",
+          "mode": "list",
+          "cachedResultName": "Success Stories",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Linkedin Stories",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "URL",
+              "lookupValue": "={{ $json.url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        80,
+        -16
+      ],
+      "id": "668ea886-c728-480d-968b-71f105eae776",
+      "name": "Get Existing Rows",
+      "executeOnce": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nAIUxyNbZ3qwnWqX",
+          "name": "Uche Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "url",
+              "field2": "URL"
+            }
+          ]
+        },
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        304,
+        -96
+      ],
+      "id": "ae303323-61f6-489d-9a96-98331860a94c",
+      "name": "Exclude Existing Rows"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=LinkedIn Post -  {{ $json['Post Content'] }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a helpful assistant that reads LinkedIn post content and classifies it into one of the following categories based on the `Context about 3MTT` section. Note that relevant/related posts typically mention 3MTT or #3MTT and in are written in English, otherwise, classify as Unrelated:\n\nCategories:\n\nUnrelated – Posts not connected to 3MTT or misrepresenting it. These include posts not written in English.\n\nProject Showcase – Posts highlighting a specific project or deliverable created by fellows as part of the 3MTT program.\n\nLearning Progress – Posts describing an individual’s personal learning journey, training milestones, reflections, or coursework progress in 3MTT.\n\nEvent – Posts about events related to 3MTT (e.g., webinars, boot camps, demo days, career fairs, or community meetups).\n\nJob or Opportunity – Posts sharing job postings, internships, mentorships, scholarships, or career prospects connected to 3MTT.\n\nImpact Story – Posts spotlighting how 3MTT has transformed someone’s life, empowered a community, or produced inspirational fellow stories (not tied to a single course update or project demo).\n\nProgram Announcement / Milestone – Posts about 3MTT-wide updates, partnerships, recognitions, government mentions, or program achievements at scale.\n\nContext about 3MTT:\n\nThe 3 Million Technical Talent (3MTT) Programme is a Nigerian federal initiative launched in October 2023 by the Ministry of Communications, Innovation & Digital Economy, implemented by NITDA.\n\nGoal: train 3 million Nigerians in high-demand technical and digital skills (AI, cloud computing, software engineering, cybersecurity, data science, UI/UX, game development, etc.) by 2027.\n\nModel: hybrid learning combining self-paced online training and in-person instruction at learning clusters.\n\nPartnerships: works with global tech companies (Microsoft, Google, etc.), local institutions, and private sector partners to provide training, internships, jobs, and entrepreneurship support.\n\nImpact: trained 30,000 fellows in phase 1 (Dec 2023–Mar 2024), 270,000+ fellows onboarded in phase 2, with 220+ learning centres nationwide.\n\nInstructions:\n\nRead the LinkedIn post text carefully.\n\nAssign exactly one category from the list above.\n\nDo not output explanations — only the category label (e.g., “Impact Story”).\n\nIf a post is ambiguous, select the category that best reflects its core message."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        736,
+        -96
+      ],
+      "id": "5f82df22-7652-4752-a0ac-8a3a1f5c7cf9",
+      "name": "Categorize LinkedIn Post",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        816,
+        128
+      ],
+      "id": "6630fb43-ed4f-4079-9975-3a6629f15eaf",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KtWVEjf0x1tIp6XE",
+          "name": "3MTT OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q",
+          "mode": "list",
+          "cachedResultName": "Success Stories",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Linkedin Stories",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Post Type": "={{ $json.text }}",
+            "URL": "={{ $('Add Posts to LinkedIn Stories Sheet').item.json.URL }}",
+            "Status ": "Scanned"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post Content",
+              "displayName": "Post Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Type",
+              "displayName": "Post Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1328,
+        0
+      ],
+      "id": "0225aced-7b1f-4ae3-95ff-8f1f2cc88559",
+      "name": "Update LinkedIn Stories",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nAIUxyNbZ3qwnWqX",
+          "name": "Uche Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a33d7271-472d-4fd5-b942-b11fe6e6b447",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "Unrelated",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        -96
+      ],
+      "id": "56917b1c-2f34-4dbc-87ed-80b4ffb4aade",
+      "name": "Is Unrelated?"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q",
+          "mode": "list",
+          "cachedResultName": "Success Stories",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1083958320,
+          "mode": "list",
+          "cachedResultName": "Validated Stories",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BPTFmH8DKaECK4x9f-ZsOIU7tXOhPUjOPYwqMjom26Q/edit#gid=1083958320"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Post Type": "={{ $json.text }}",
+            "Source": "LinkedIn",
+            "URL": "={{ $('Add Posts to LinkedIn Stories Sheet').item.json.URL }}",
+            "Post Content": "={{ $('Add Posts to LinkedIn Stories Sheet').item.json[\"Post Content\"] }}",
+            "Date": "={{ $('Add Posts to LinkedIn Stories Sheet').item.json.Date.toDateTime().format('yyyy-MM-dd') }}"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post Content",
+              "displayName": "Post Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Type",
+              "displayName": "Post Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Featured",
+              "displayName": "Featured",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1312,
+        -240
+      ],
+      "id": "2bd1c9bf-8b03-450f-9dda-b19974f82cc6",
+      "name": "Update Validated Stories",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nAIUxyNbZ3qwnWqX",
+          "name": "Uche Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Run Daily @2am": [
+      {
+        "json": {
+          "timestamp": "2025-09-12T02:00:26.014+01:00",
+          "Readable date": "September 12th 2025, 2:00:26 am",
+          "Readable time": "2:00:26 am",
+          "Day of week": "Friday",
+          "Year": "2025",
+          "Month": "September",
+          "Day of month": "12",
+          "Hour": "02",
+          "Minute": "00",
+          "Second": "26",
+          "Timezone": "Africa/Lagos (UTC+01:00)"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Run Daily @2am": {
+      "main": [
+        [
+          {
+            "node": "Get 3MTT LinkedIn Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get 3MTT LinkedIn Stories": {
+      "main": [
+        [
+          {
+            "node": "Exclude Existing Rows",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Existing Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Posts to LinkedIn Stories Sheet": {
+      "main": [
+        [
+          {
+            "node": "Categorize LinkedIn Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing Rows": {
+      "main": [
+        [
+          {
+            "node": "Exclude Existing Rows",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Exclude Existing Rows": {
+      "main": [
+        [
+          {
+            "node": "Add Posts to LinkedIn Stories Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorize LinkedIn Post": {
+      "main": [
+        [
+          {
+            "node": "Is Unrelated?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Categorize LinkedIn Post",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Unrelated?": {
+      "main": [
+        [
+          {
+            "node": "Update LinkedIn Stories",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Validated Stories",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update LinkedIn Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "ApZjzznmTXJ8iYAw"
+  },
+  "versionId": "88bea0ce-953f-4903-b281-67cf23a8e6e7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b5d089e75631aa9df458a0e6b57dd391254a0934bc8af8c052a1a5c30b3edab9"
+  },
+  "id": "dcgkNYqGfXKIyVJh",
+  "tags": []
+}

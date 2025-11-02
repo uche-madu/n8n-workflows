@@ -1,0 +1,203 @@
+{
+  "name": "Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "8a4b8b63-c91f-4cbc-b6f9-57b2ad6e151d",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09N37UTV89",
+          "mode": "list",
+          "cachedResultName": "automation-bugs"
+        },
+        "text": "=n8n error:\n- Workflow: {{ $json.workflow.name }}\n\n- Execution URL: {{ $json.execution.url }}\n\n- Error Message: {{ $json.execution.error.message }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        480,
+        48
+      ],
+      "id": "ea3cbb91-ba31-462a-ae9b-3a657d01b401",
+      "name": "Notify on Slack",
+      "webhookId": "f0a53c1b-e0b8-4835-9255-1f4d4e13787f",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "05DiOTX08e6CMrWO",
+          "name": "Loubby Slack"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fb9aa73e-a5d1-4f20-bf1d-8a4748b997a6",
+              "leftValue": "={{ $json.execution.mode }}",
+              "rightValue": "manual",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "354dabba-4259-4a24-bdc1-f8c35787b4ac",
+      "name": "Triggered Manually?"
+    },
+    {
+      "parameters": {
+        "content": "## ⚠️  Error Notification Workflow\nThis workflow handles errors across all automations:\n\n🟢 Manual runs (testing/tweaking) → ❌ No alerts\n\n🔄 Automatic runs (schedule, webhook, etc.) → 📩 Slack alert sent to #tech-support\n\nSlack message includes:\n\n📝 Workflow name\n\n🔗 Execution link\n\n💥 Error message\n\n✨ Prevents spam during testing, while still surfacing real production issues.",
+        "height": 432,
+        "width": 384
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        -208
+      ],
+      "typeVersion": 1,
+      "id": "310c36f5-ac7f-4312-8769-642589a6f197",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "sendTo": "uche.iheanyi.madu@gmail.com",
+        "subject": "=Error in n8n Workflow: {{ $json.workflow.name }}",
+        "message": "=Execution URL: {{ $json.execution.url }}  \n\nError Message: {{ $json.execution.error.message }}",
+        "options": {
+          "ccList": "talk2king.aj@gmail.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        -128
+      ],
+      "id": "41efcbc7-d4bb-4948-bbe0-076b25db4b75",
+      "name": "Notify on Gmail",
+      "webhookId": "28e9abe1-268f-47b3-9e94-0dc419b6cb05",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E6tZSl3afw1qUsqb",
+          "name": "Uche's Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Error Trigger": [
+      {
+        "json": {
+          "execution": {
+            "id": "1974231",
+            "url": "https://divverse-community.app.n8n.cloud/workflow/CpvVxh66B1vnW8vQ/executions/1974231",
+            "error": {
+              "cause": {
+                "ID": "={{ $('Generate Video with Creatomate').item.json.id }}",
+                "Chat Input Text": "={{ $('When chat message received').item.json.chatInput }}",
+                "Extracted Instructions": "={{ $('Merge').item.json.instruction }}",
+                "Article Text": "={{ $('Merge').item.json.text }}",
+                "Video Script": "={{ $json.script }}"
+              },
+              "level": "warning",
+              "tags": {},
+              "timestamp": 1761050361797,
+              "context": {
+                "runIndex": 0,
+                "itemIndex": 0,
+                "nodeCause": "When chat message received",
+                "descriptionKey": "nodeNotFound",
+                "parameter": "columns.value"
+              },
+              "functionality": "regular",
+              "name": "ExpressionError",
+              "message": "Referenced node doesn't exist",
+              "stack": "ExpressionError: Referenced node doesn't exist\n    at createExpressionError (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-workflow@file+packages+workflow/node_modules/n8n-workflow/src/workflow-data-proxy.ts:790:11)\n    at Proxy.$ (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-workflow@file+packages+workflow/node_modules/n8n-workflow/src/workflow-data-proxy.ts:1080:12)\n    at Proxy.eval (eval at getFunction (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/@n8n+tournament@1.0.6/node_modules/@n8n/tournament/src/FunctionEvaluator.ts:13:16), <anonymous>:6:42)\n    at FunctionEvaluator.evaluate (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/@n8n+tournament@1.0.6/node_modules/@n8n/tournament/src/FunctionEvaluator.ts:20:13)\n    at Tournament.execute (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/@n8n+tournament@1.0.6/node_modules/@n8n/tournament/src/index.ts:45:25)\n    at evaluateExpression (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-workflow@file+packages+workflow/node_modules/n8n-workflow/src/expression-evaluator-proxy.ts:20:9)\n    at Expression.renderExpression (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-workflow@file+packages+workflow/node_modules/n8n-workflow/src/expression.ts:330:29)\n    at Expression.resolveSimpleParameterValue (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-workflow@file+packages+workflow/node_modules/n8n-workflow/src/expression.ts:311:28)\n    at resolveParameterValue (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-workflow@file+packages+workflow/node_modules/n8n-workflow/src/expression.ts:501:16)\n    at Expression.getParameterValue (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-workflow@file+packages+workflow/node_modules/n8n-workflow/src/expression.ts:558:22)\n    at ExecuteContext._getNodeParameter (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+sdk-trace-base@1.30_08b575bec2313d5d8a4cc75358971443/node_modules/n8n-core/src/execution-engine/node-execution-context/node-execution-context.ts:429:37)\n    at ExecuteContext.getNodeParameter (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+sdk-trace-base@1.30_08b575bec2313d5d8a4cc75358971443/node_modules/n8n-core/src/execution-engine/node-execution-context/execute-context.ts:128:9)\n    at ExecuteContext.execute (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@aws-sdk+credential-providers@3.808.0_asn1.js@5_afd197edb2c1f848eae21a96a97fab23/node_modules/n8n-nodes-base/nodes/Airtable/v2/actions/record/create.operation.ts:75:25)\n    at ExecuteContext.router (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@aws-sdk+credential-providers@3.808.0_asn1.js@5_afd197edb2c1f848eae21a96a97fab23/node_modules/n8n-nodes-base/nodes/Airtable/v2/actions/router.ts:32:67)\n    at ExecuteContext.execute (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@aws-sdk+credential-providers@3.808.0_asn1.js@5_afd197edb2c1f848eae21a96a97fab23/node_modules/n8n-nodes-base/nodes/Airtable/v2/AirtableV2.node.ts:30:23)\n    at WorkflowExecute.executeNode (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+sdk-trace-base@1.30_08b575bec2313d5d8a4cc75358971443/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1093:31)\n    at WorkflowExecute.runNode (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+sdk-trace-base@1.30_08b575bec2313d5d8a4cc75358971443/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1274:22)\n    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+sdk-trace-base@1.30_08b575bec2313d5d8a4cc75358971443/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1676:38\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+sdk-trace-base@1.30_08b575bec2313d5d8a4cc75358971443/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:2292:11"
+            },
+            "lastNodeExecuted": "Log data in Airtable",
+            "mode": "trigger"
+          },
+          "workflow": {
+            "id": "CpvVxh66B1vnW8vQ",
+            "name": "Auto-Video Creator"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Triggered Manually?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Triggered Manually?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Notify on Slack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify on Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f340860e-2a42-432f-b91c-ae3d1948f96b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "tXQ8gQkD8HP1mkXQ",
+  "tags": []
+}
