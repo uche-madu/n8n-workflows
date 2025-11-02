@@ -9,8 +9,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        32,
-        1040
+        -144,
+        408
       ],
       "id": "a1886eb4-a684-4e8c-a15b-68b1513ad358",
       "name": "Webhook Trigger",
@@ -23,28 +23,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        48,
+        80,
         80
       ],
       "id": "0710adbe-342c-4443-b2aa-252b05b87fab",
       "name": "Construct LinkedIn Post Search URL"
-    },
-    {
-      "parameters": {
-        "url": "=https://api.apify.com/v2/acts/supreme_coder~linkedin-post/run-sync-get-dataset-items?token=apify_api_VXQjlVmqWiSQAJwN84taju9HQ1Mczq1fJgV3",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n    \"deepScrape\": true,\n    \"limitPerSource\": 10,\n    \"rawData\": false,\n    \"urls\": [\n        \"{{ $json.constructedUrl }}\"\n    ]\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        272,
-        80
-      ],
-      "id": "c443c292-a81c-4b4a-81f1-252761908f30",
-      "name": "Search LinkedIn for Related Posts"
     },
     {
       "parameters": {
@@ -61,7 +44,7 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.6,
       "position": [
-        480,
+        528,
         80
       ],
       "id": "cf24a9ce-7294-4d56-b8ba-148f96a3d42e",
@@ -74,7 +57,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        864,
+        880,
         80
       ],
       "id": "9c878ff0-4c28-42ec-a6b9-f7ce125aa5c8",
@@ -335,7 +318,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1088,
+        1104,
         80
       ],
       "id": "d6213023-f37e-481b-ad8e-f0862d2d0362",
@@ -355,7 +338,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
       "position": [
-        576,
+        600,
         304
       ],
       "id": "ed51549c-33e2-40eb-a20a-77846627e65a",
@@ -407,6 +390,35 @@
           "name": "Uche - Google Sheets Trigger"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorId": {
+          "__rl": true,
+          "value": "Wpp1BZ6yGWjySadk3",
+          "mode": "list",
+          "cachedResultName": "Linkedin Post Scraper ✅ No cookies ✅ $2 per 1k posts (supreme_coder/linkedin-post)",
+          "cachedResultUrl": "https://console.apify.com/actors/Wpp1BZ6yGWjySadk3/input"
+        },
+        "customBody": "{\n    \"deepScrape\": true,\n    \"limitPerSource\": 10,\n    \"rawData\": false,\n    \"urls\": [\n        \"{{ $json.constructedUrl }}\"\n    ]\n}",
+        "memory": 512,
+        "authentication": "apifyOAuth2Api"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [
+        304,
+        80
+      ],
+      "id": "432a7a62-e270-4582-af71-dea9e3d2c0c8",
+      "name": "Search LinkedIn for Related Posts",
+      "credentials": {
+        "apifyOAuth2Api": {
+          "id": "Nl1l0FUZdHPSOCPL",
+          "name": "Uche - Dreem Apify"
+        }
+      }
     }
   ],
   "pinData": {
@@ -449,1054 +461,6 @@
           "constructedUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
         }
       }
-    ],
-    "Search LinkedIn for Related Posts": [
-      {
-        "json": {
-          "urn": "urn:li:activity:7383474916647559168",
-          "text": "想探索 #新型顯示技術 應用於 #醫療 及 #健康領域 的趨勢嗎?\n敬邀參加👉10/17(五) 智慧顯示前瞻技術應用發展研討會\n \n這場研討會將由 #Omdia 、 #元太科技 、 #源奇科技、 #佐臻 等產業專家，分享顯示科技如何跨足醫療場域，帶來 AI模組、智慧穿戴、AR醫療應用的最新趨勢\n \n📌 為什麼要參加？\n🚑 醫療與顯示科技的跨域應用最新趨勢\n🧠 AI + AR 如何打造智慧醫療新藍圖\n🔍 掌握未來產業創新與合作契機\n \n📅 時間：10/17 (五) 13:00–15:40\n🏢 地點：張榮發國際會議中心 810B (台北市中正區中山南路11號8樓)\n \n🔗免費報名連結（名額有限，請即早登記）：https://lnkd.in/gkFGUpr4\n\nWant to Exploring the Emerging Display Technology Application Trends in the Medical and Healthcare Fields?  We cordially invite you to join the 2025 Smart Display Technology and Application Development Seminar.\n\nAI, AR/VR, smart wearables, and display technology are revolutionizing medical treatment and health management! Join us for insights from industry experts at Omdia, E Ink Holdings, Source Quantum Technology, and Jorjin Technologies as they discuss the integration of display technology into the medical sector, highlighting the latest trends in AI modules, smart wearables, and AR medical applications.\n\nKey Highlights:\n- Explore the latest cross-sectoral application trends of medical and display technology.\n- Learn how AI + AR are shaping the future of smart healthcare.\n- Identify opportunities for industry innovation and collaboration.\n\nSave the Date: \n📅 October 17, 2025 (Friday), 13:00–15:40\n🏢 Venue: Chang Yung-Fa International Convention Center, Room 810B (8F, No. 11, Zhongshan S. Rd., Zhongzheng Dist., Taipei City)\n\nSecure Your Spot. Limited seats availability.\n🔗 Registration Link: https://lnkd.in/gkFGUpr4",
-          "url": "https://www.linkedin.com/posts/kristietaiwan_jggiozowxlyqjqwmvh-nphlkk-hfpiypouoiqf-activity-7383474916647559168-UAoY?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-          "postedAtTimestamp": 1760357598459,
-          "postedAtISO": "2025-10-13T12:13:18.459Z",
-          "timeSincePosted": "1m",
-          "isRepost": false,
-          "authorType": "Person",
-          "authorProfileUrl": "https://www.linkedin.com/in/kristietaiwan?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAABx1mWQBkTiB9X94yxK3r9Qu2m4sz_2n5mw",
-          "authorProfileId": "kristietaiwan",
-          "authorHeadline": "Partnerships Director at InnoVEX, the Innovation Hub of Asia",
-          "authorName": "Kristie Lee",
-          "image": "https://media.licdn.com/dms/image/v2/D5622AQFuc23qna7CVQ/feedshare-shrink_160/B56ZndfTlQKIAc-/0/1760357597645?e=1762992000&v=beta&t=XAmWpI4K0ZhwkdJOQ11KGfjIvx7Fdpqsi-RVylD1Lyg",
-          "type": "image",
-          "images": [
-            "https://media.licdn.com/dms/image/v2/D5622AQFuc23qna7CVQ/feedshare-shrink_160/B56ZndfTlQKIAc-/0/1760357597645?e=1762992000&v=beta&t=XAmWpI4K0ZhwkdJOQ11KGfjIvx7Fdpqsi-RVylD1Lyg"
-          ],
-          "isActivity": false,
-          "shareUrn": "urn:li:share:7383474915502563328",
-          "attributes": [],
-          "comments": [],
-          "reactions": [],
-          "numShares": 0,
-          "numLikes": 0,
-          "numComments": 0,
-          "canReact": true,
-          "canPostComments": true,
-          "canShare": true,
-          "commentingDisabled": false,
-          "allowedCommentersScope": "ALL",
-          "rootShare": true,
-          "shareAudience": "PUBLIC",
-          "author": {
-            "firstName": "Kristie",
-            "lastName": "Lee",
-            "occupation": "Partnerships Director at InnoVEX, the Innovation Hub of Asia",
-            "id": "477469028",
-            "publicId": "kristietaiwan",
-            "trackingId": "yKPwg5CeRLSqHmGTlPe9ag==",
-            "profileId": "ACoAABx1mWQBkTiB9X94yxK3r9Qu2m4sz_2n5mw",
-            "picture": "https://media.licdn.com/dms/image/v2/D5603AQFQViNJsj6XvQ/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1666920679131?e=1762992000&v=beta&t=YnoAqu8BxIAB1vJuLnVmwN6fKLLSULB3_JAR_7_MxW8",
-            "backgroundImage": "https://media.licdn.com/dms/image/v2/D5616AQEfsTWfhPrcEA/profile-displaybackgroundimage-shrink_350_1400/B56ZcP3vA5GsAY-/0/1748317959451?e=1762992000&v=beta&t=JbptAaipo7VHn2hSl9Lo_rdnmG0MrsOuXIu2RFUU6WY"
-          },
-          "authorProfilePicture": "https://media.licdn.com/dms/image/v2/D5603AQFQViNJsj6XvQ/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1666920679131?e=1762992000&v=beta&t=YnoAqu8BxIAB1vJuLnVmwN6fKLLSULB3_JAR_7_MxW8",
-          "authorUrn": "urn:li:member:477469028",
-          "inputUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
-        }
-      },
-      {
-        "json": {
-          "urn": "urn:li:activity:7383474665781874689",
-          "text": "Today at the World Health Summit, I had the opportunity to join a panel discussion on one of the most pressing challenges of our time: securing access to essential medicines in an increasingly volatile world. Representing Fresenius Group, I shared our perspective on how resilient, localized, and digitally supported manufacturing can help safeguard healthcare systems globally.\r\nWe believe four strategic pillars are essential to future-proof healthcare:\r\n\r\n▪️ Healthcare as a Strategic Industry\r\nHealthcare must be recognized not just as a cost factor, but as a driver of prosperity. Generics, for example, account for ~80% of prescriptions in Germany but only ~8% of drug spending. Across Europe and the U.S., the sector creates millions of jobs and contributes significantly to GDP and exports.\r\n\r\n▪️ Regional Supply Sovereignty\r\nEurope and the U.S. currently depend on China and India for over 70% of active pharmaceutical ingredients (APIs). A disruption in these supply chains can jeopardize access to critical treatments. A coordinated ‘API Airbus’ model, inspired by the aviation sector, could help rebuild local production capacity and ensure long-term resilience.\r\n\r\n▪️ Resilience Over Lowest Cost\r\nProcurement systems must reward supply stability, not just the lowest price. When essential medicines cost less than €2 per dose, we risk shortages and discontinuations. Resilience premiums and multi-year contracts can help reverse this trend.\r\n\r\n▪️ People, Digitalization & AI\r\nTo close workforce gaps and boost innovation, we must invest in talent and embrace digital tools and AI – within clear regulatory frameworks. Europe needs a true single market for healthcare professionals and practical pathways for AI adoption.\r\n\r\nLet’s elevate healthcare to its rightful place: as a strategic sector that secures access, drives innovation, and strengthens national resilience.\r\n\r\n#WHS2025 #CommittedToLife\r\n\nFotos: Steffen Kugler",
-          "url": "https://www.linkedin.com/posts/marc-alexander-mahl-hg_whs2025-committedtolife-activity-7383474665781874689-VQPh?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-          "postedAtTimestamp": 1760357538648,
-          "postedAtISO": "2025-10-13T12:12:18.648Z",
-          "timeSincePosted": "2m",
-          "isRepost": false,
-          "authorType": "Person",
-          "authorProfileUrl": "https://www.linkedin.com/in/marc-alexander-mahl-hg?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAAA2CZXgBHW4K9vLIPh17Ee1bQG7WKcNZE6M",
-          "authorProfileId": "marc-alexander-mahl-hg",
-          "authorHeadline": "President Pharma and Nutrition",
-          "authorName": "Marc-Alexander Mahl",
-          "image": "https://media.licdn.com/dms/image/v2/D4E22AQGJvoxEw2-tHQ/feedshare-shrink_480/B4EZndfExHGcAY-/0/1760357536568?e=1762992000&v=beta&t=CHv0GaQ05PRk64ROMKLPL8zuK9CAh5NwRMLpA-GcjFo",
-          "type": "image",
-          "images": [
-            "https://media.licdn.com/dms/image/v2/D4E22AQGJvoxEw2-tHQ/feedshare-shrink_480/B4EZndfExHGcAY-/0/1760357536568?e=1762992000&v=beta&t=CHv0GaQ05PRk64ROMKLPL8zuK9CAh5NwRMLpA-GcjFo",
-            "https://media.licdn.com/dms/image/v2/D4E22AQHeUoYo-AM_KQ/feedshare-shrink_20/B4EZndfEx2IoA0-/0/1760357535627?e=1762992000&v=beta&t=33Nzl8GD8knj5Se8uUGIT7YvIeev1csDO0QXuJsDMFQ"
-          ],
-          "isActivity": false,
-          "shareUrn": "urn:li:ugcPost:7383474664007802880",
-          "attributes": [
-            {
-              "start": 222,
-              "length": 15,
-              "type": "COMPANY_NAME",
-              "company": {
-                "name": "Fresenius Group",
-                "universalName": "fresenius-se",
-                "trackingId": "meLChweWSyKIhNupMpznRg==",
-                "active": true,
-                "showcase": false,
-                "entityUrn": "urn:li:fs_miniCompany:796181",
-                "logoUrl": "https://media.licdn.com/dms/image/v2/D4E0BAQF8B3vRFiguuA/company-logo_200_200/company-logo_200_200/0/1715937108612/fresenius_se_logo?e=1762992000&v=beta&t=V7-hrBpLIWh8k30xDhWScFO0zGmSHT7PUcWHFpwNpng"
-              }
-            }
-          ],
-          "comments": [],
-          "reactions": [
-            {
-              "type": "LIKE",
-              "profile": {
-                "firstName": "Ursula",
-                "lastName": "Schneider ",
-                "occupation": "Executive Advisor External Relations Fresenius",
-                "id": "503948685",
-                "publicId": "ursula-schneider",
-                "trackingId": "5svoZ89uSAKOj/oQH94RpQ==",
-                "profileId": "ACoAAB4JpY0BXBMLBdxnpoKBa0n-Q2r7Zo9H3n8",
-                "picture": "https://media.licdn.com/dms/image/v2/C4D03AQHgmzBwNSetfA/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1605626057550?e=1762992000&v=beta&t=G6mxWbvnQHcSlPUjHO4Rg_zI5Oq8meFkp8fTi76FxZs"
-              }
-            },
-            {
-              "type": "LIKE",
-              "company": {
-                "name": "TAIS.ai",
-                "universalName": "tais-ai",
-                "trackingId": "Ni9KbtakRNucjkikhzK20g==",
-                "active": true,
-                "showcase": false,
-                "entityUrn": "urn:li:fs_miniCompany:108073312",
-                "logoUrl": "https://media.licdn.com/dms/image/v2/D4E0BAQHD-TDrATRGhg/company-logo_400_400/B4EZiMBkmaHgAY-/0/1754695879364/tais_ai_logo?e=1762992000&v=beta&t=LbyJkfO1W6jWudpgjylQRtvac3DaLkojNDsmbWM_qWE"
-              }
-            }
-          ],
-          "numShares": 0,
-          "numLikes": 2,
-          "numComments": 0,
-          "canReact": true,
-          "canPostComments": true,
-          "canShare": true,
-          "commentingDisabled": false,
-          "allowedCommentersScope": "ALL",
-          "rootShare": true,
-          "shareAudience": "PUBLIC",
-          "author": {
-            "firstName": "Marc-Alexander",
-            "lastName": "Mahl",
-            "occupation": "President Pharma and Nutrition",
-            "id": "226649464",
-            "publicId": "marc-alexander-mahl-hg",
-            "trackingId": "jOUhP4TnQFex7ad9SvcOQA==",
-            "profileId": "ACoAAA2CZXgBHW4K9vLIPh17Ee1bQG7WKcNZE6M",
-            "picture": "https://media.licdn.com/dms/image/v2/D4E03AQFFai3q7WUkZQ/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1688491612237?e=1762992000&v=beta&t=iGFkWeYy1iEjLCthmjWBO0dnbva0A1043asZz_lQ884",
-            "backgroundImage": "https://media.licdn.com/dms/image/v2/D4E16AQGCoWnw0ItMfA/profile-displaybackgroundimage-shrink_200_800/profile-displaybackgroundimage-shrink_200_800/0/1711312276949?e=1762992000&v=beta&t=PyktbGnziEuhvRjgHpnz22zaiwKLizlgkukXVISNSj8"
-          },
-          "authorProfilePicture": "https://media.licdn.com/dms/image/v2/D4E03AQFFai3q7WUkZQ/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1688491612237?e=1762992000&v=beta&t=iGFkWeYy1iEjLCthmjWBO0dnbva0A1043asZz_lQ884",
-          "authorUrn": "urn:li:member:226649464",
-          "inputUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
-        }
-      },
-      {
-        "json": {
-          "urn": "urn:li:activity:7383473629537198082",
-          "text": "Spare a minute and read my opinion paper: AI in primary care - a general practitioner’s bucket list https://lnkd.in/dtPg2b_y\nKey messages:\n\nRapid digitalisation in primary care is challenging due to fragmented systems and increasing patient demands.\n\nAI tools have potential to boost workflows and support decision-making, but evidence often lags behind adoption.\n\nGPs require reliable, interoperable digital platforms that preserve holistic, personalised care while easing documentation burdens.",
-          "title": "AI in primary care - a general practitioner’s bucket list",
-          "url": "https://www.linkedin.com/posts/veronica-milos-nymberg-6b969196_ai-in-primary-care-a-general-practitioner-activity-7383473629537198082-jfKI?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-          "postedAtTimestamp": 1760357291588,
-          "postedAtISO": "2025-10-13T12:08:11.588Z",
-          "timeSincePosted": "6m",
-          "isRepost": false,
-          "authorType": "Person",
-          "authorProfileUrl": "https://www.linkedin.com/in/veronica-milos-nymberg-6b969196?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAABRjy60BVywm2_OJsTD_VV2sC3DOZIe5y6o",
-          "authorProfileId": "veronica-milos-nymberg-6b969196",
-          "authorHeadline": "MD, Associate Professor, Senior lecturer",
-          "authorName": "Veronica Milos Nymberg",
-          "image": "https://media.licdn.com/dms/image/sync/v2/D4D27AQGz0fZ4FXFr3A/articleshare-shrink_480/B4DZndddIGKsAo-/0/1760357110802?e=1760965200&v=beta&t=MClUhOQdLiUuclbEBLJhEZUFmcvQkFZ0Kzb_RCKq2Yg",
-          "type": "article",
-          "article": {
-            "type": "EXTERNAL_FULL",
-            "urn": "urn:li:article:7049178984827535460",
-            "url": "https://www.tandfonline.com/doi/full/10.1080/13814788.2025.2567462#references-Section1",
-            "title": "AI in primary care - a general practitioner’s bucket list"
-          },
-          "isActivity": false,
-          "shareUrn": "urn:li:share:7383473628778164224",
-          "attributes": [],
-          "comments": [],
-          "reactions": [],
-          "numShares": 0,
-          "numLikes": 0,
-          "numComments": 0,
-          "canReact": true,
-          "canPostComments": true,
-          "canShare": true,
-          "commentingDisabled": false,
-          "allowedCommentersScope": "ALL",
-          "rootShare": true,
-          "shareAudience": "PUBLIC",
-          "author": {
-            "firstName": "Veronica",
-            "lastName": "Milos Nymberg",
-            "occupation": "MD, Associate Professor, Senior lecturer",
-            "id": "342084525",
-            "publicId": "veronica-milos-nymberg-6b969196",
-            "trackingId": "ftR8kcUYST6q00X0DxQngQ==",
-            "profileId": "ACoAABRjy60BVywm2_OJsTD_VV2sC3DOZIe5y6o",
-            "picture": "https://media.licdn.com/dms/image/v2/C4E03AQGkEno3CPOwvw/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1659247256960?e=1762992000&v=beta&t=CZ3YdgzBOvddcdyH0NM2UbOLFq7wMNAsGB9fsDMGfBw"
-          },
-          "authorProfilePicture": "https://media.licdn.com/dms/image/v2/C4E03AQGkEno3CPOwvw/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1659247256960?e=1762992000&v=beta&t=CZ3YdgzBOvddcdyH0NM2UbOLFq7wMNAsGB9fsDMGfBw",
-          "authorUrn": "urn:li:member:342084525",
-          "inputUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
-        }
-      },
-      {
-        "json": {
-          "urn": "urn:li:activity:7383473578446516224",
-          "text": "𝐄𝐦𝐩𝐨𝐰𝐞𝐫𝐢𝐧𝐠 𝐇𝐞𝐚𝐥𝐭𝐡𝐢𝐞𝐫 𝐋𝐢𝐯𝐞𝐬 𝐚𝐧𝐝 𝐒𝐦𝐚𝐫𝐭𝐞𝐫 𝐇𝐨𝐬𝐩𝐢𝐭𝐚𝐥𝐬 𝐰𝐢𝐭𝐡 𝐑𝐞𝐦𝐨𝐭𝐞 𝐏𝐚𝐭𝐢𝐞𝐧𝐭 𝐌𝐨𝐧𝐢𝐭𝐨𝐫𝐢𝐧𝐠 (𝐑𝐏𝐌)\n\nRemote Patient Monitoring isn’t just a patient-care initiative anymore.\nIt’s becoming a 𝐬𝐭𝐫𝐚𝐭𝐞𝐠𝐢𝐜 𝐠𝐫𝐨𝐰𝐭𝐡 𝐚𝐫𝐞𝐚 for hospitals and healthcare solution providers.\n\nBy connecting patients’ vitals through IoT devices, wearables, and mobile apps, RPM enables continuous monitoring, early intervention, and better chronic care management, without overloading the clinical workforce.\nHere’s how forward-thinking healthcare providers and solution companies are using it to drive real impact:\n\n𝐁𝐮𝐢𝐥𝐝𝐢𝐧𝐠 𝐈𝐧𝐭𝐞𝐠𝐫𝐚𝐭𝐞𝐝 𝐂𝐚𝐫𝐞 𝐏𝐥𝐚𝐭𝐟𝐨𝐫𝐦𝐬\nCombining IoT data with EHR systems for a real-time view of each patient, helping physicians make faster, data-backed decisions.\n\n𝐋𝐞𝐯𝐞𝐫𝐚𝐠𝐢𝐧𝐠 𝐀𝐈 𝐟𝐨𝐫 𝐏𝐫𝐞𝐝𝐢𝐜𝐭𝐢𝐯𝐞 𝐈𝐧𝐬𝐢𝐠𝐡𝐭𝐬\nAI-driven RPM systems analyse trends in vital signs and symptoms to predict deterioration before it occurs, turning data into prevention.\n\n𝐄𝐱𝐩𝐚𝐧𝐝𝐢𝐧𝐠 𝐂𝐚𝐫𝐞 𝐑𝐞𝐚𝐜𝐡 𝐰𝐢𝐭𝐡 𝐆𝐂𝐂 𝐒𝐮𝐩𝐩𝐨𝐫𝐭\nGlobal Capability Centres (GCCs) in India are helping healthcare providers scale RPM solutions efficiently, from device integration and app development to analytics, cybersecurity, and 24x7 support.\n\n𝐑𝐞𝐝𝐮𝐜𝐢𝐧𝐠 𝐎𝐩𝐞𝐫𝐚𝐭𝐢𝐨𝐧𝐚𝐥 𝐂𝐨𝐬𝐭𝐬\nWith automated alerts and digital follow-ups, RPM helps hospitals reduce readmissions and optimise resource utilization while improving patient satisfaction.\n\nThe real power of RPM isn’t just remote monitoring; it’s connected intelligence that makes healthcare more responsive, efficient, and humane.\nAs we move toward a more distributed model of care, RPM will be the bridge between hospital excellence and home-based healing.\n\n👉 If you’re building or scaling an RPM solution, how are you approaching data integration and patient engagement?\n\n#RemotePatientMonitoring #DigitalHealth #HealthcareInnovation #AIinHealthcare #HealthTech #GCCIndia #IoTinHealthcare",
-          "url": "https://www.linkedin.com/feed/update/urn:li:groupPost:140274-7383473577196593152?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-          "postedAtTimestamp": 1760357279407,
-          "postedAtISO": "2025-10-13T12:07:59.407Z",
-          "timeSincePosted": "6m",
-          "isRepost": false,
-          "authorType": "Person",
-          "authorProfileUrl": "https://www.linkedin.com/in/vishal-panchal-sales-leader?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAAAI9lKIBR55egyyRsFXhzJFS87EENrgBCXs",
-          "authorProfileId": "vishal-panchal-sales-leader",
-          "authorHeadline": "VP Sales at Ace Infoway | Sales & Operation | P&L | LinkedIn Top Voice | Health Tech Advocate | Expert in Generative AI | Vibe Coding | Fintech | IoT | Supply Chain Logistics | ESG & Sustainability",
-          "authorName": "Vishal Panchal",
-          "image": "https://media.licdn.com/dms/image/v2/D4D22AQG0A_KUh2Lt6Q/feedshare-shrink_2048_1536/B4DZndeFCFGgAw-/0/1760357277579?e=1762992000&v=beta&t=IJMPPc3gtzxLlqscWmJnSPcEAkJAXwWzbYM_1p7T-K0",
-          "type": "image",
-          "images": [
-            "https://media.licdn.com/dms/image/v2/D4D22AQG0A_KUh2Lt6Q/feedshare-shrink_2048_1536/B4DZndeFCFGgAw-/0/1760357277579?e=1762992000&v=beta&t=IJMPPc3gtzxLlqscWmJnSPcEAkJAXwWzbYM_1p7T-K0"
-          ],
-          "isActivity": true,
-          "activityDescription": "New post in Health Worldwide",
-          "shareUrn": "urn:li:groupPost:140274-7383473577196593152",
-          "attributes": [],
-          "comments": [],
-          "reactions": [],
-          "numShares": 0,
-          "numLikes": 0,
-          "numComments": 0,
-          "canReact": true,
-          "canPostComments": false,
-          "canShare": true,
-          "commentingDisabled": true,
-          "allowedCommentersScope": "ALL",
-          "rootShare": true,
-          "shareAudience": "PUBLIC_GROUP",
-          "author": {
-            "firstName": "Vishal",
-            "lastName": "Panchal",
-            "occupation": "VP Sales at Ace Infoway | Sales & Operation | P&L | LinkedIn Top Voice | Health Tech Advocate | Expert in Generative AI | Vibe Coding | Fintech | IoT | Supply Chain Logistics | ESG & Sustainability",
-            "id": "37590178",
-            "publicId": "vishal-panchal-sales-leader",
-            "trackingId": "1mIX3/GWSSyCcBTpQnnWow==",
-            "profileId": "ACoAAAI9lKIBR55egyyRsFXhzJFS87EENrgBCXs",
-            "picture": "https://media.licdn.com/dms/image/v2/D5603AQGaTGeN-UVGEw/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1710373005355?e=1762992000&v=beta&t=qRq_0TrvAAPBCe1AVuF70OaXZ1M08SFmQgnII9VYPBg",
-            "backgroundImage": "https://media.licdn.com/dms/image/v2/D4D16AQGEbqdd_nrvqw/profile-displaybackgroundimage-shrink_200_800/profile-displaybackgroundimage-shrink_200_800/0/1732349243128?e=1762992000&v=beta&t=s_NcYzZSPmvIIvYF4u1eyAMscQPPGR8ii_SfbEiBdCs"
-          },
-          "authorProfilePicture": "https://media.licdn.com/dms/image/v2/D5603AQGaTGeN-UVGEw/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1710373005355?e=1762992000&v=beta&t=qRq_0TrvAAPBCe1AVuF70OaXZ1M08SFmQgnII9VYPBg",
-          "authorUrn": "urn:li:member:37590178",
-          "inputUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
-        }
-      },
-      {
-        "json": {
-          "urn": "urn:li:activity:7383473309847379968",
-          "text": "The economy is changing.  I think it will be a large scale RL machine, where AI will ultimately solve the “boundedly rational” agent issue for highly competitive markets. See our recent episode with Emad Mostaque founder of Stability AI who is now running https://ii.inc…",
-          "url": "https://www.linkedin.com/posts/vkleban_dominant-form-of-capital-is-changing-it-activity-7383473309847379968-CHT-?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-          "postedAtTimestamp": 1760357215368,
-          "postedAtISO": "2025-10-13T12:06:55.368Z",
-          "timeSincePosted": "7m",
-          "isRepost": true,
-          "authorType": "Person",
-          "authorProfileUrl": "https://www.linkedin.com/in/vkleban?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAAA9H8pMBxgb-zlRjZWHd4k2hxDN1JF35wWI",
-          "authorProfileId": "vkleban",
-          "authorHeadline": "AI Research & Investments @ cyber•Fund | ex-large scale infra @ Everynet | Cybernetic economy | Incentive-aligned agents | Statistical Contracts Theory | Communication-efficient training | TinyML & LoRaWAN Contributor",
-          "authorName": "Vitaly Kleban",
-          "image": "https://media.licdn.com/dms/image/v2/D4D10AQF-cDzXPw2hNg/image-shrink_480/B4DZnJwGmEGkAk-/0/1760026454908?e=1760965200&v=beta&t=XF4ZrsRJ8ev0OjtNzGRRvUl-dGJM4DGT43n_DsNsm9I",
-          "type": "text",
-          "resharedPost": {
-            "type": "image",
-            "images": [
-              "https://media.licdn.com/dms/image/v2/D4D10AQF-cDzXPw2hNg/image-shrink_480/B4DZnJwGmEGkAk-/0/1760026454908?e=1760965200&v=beta&t=XF4ZrsRJ8ev0OjtNzGRRvUl-dGJM4DGT43n_DsNsm9I"
-            ],
-            "isActivity": false,
-            "urn": "urn:li:activity:7382086001306853377",
-            "url": "https://www.linkedin.com/posts/cyberfund_dominant-form-of-capital-is-changing-it-activity-7382086001306853377-SUKE?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-            "timeSincePosted": "3d",
-            "shareUrn": "urn:li:share:7382086000119971840",
-            "text": "Dominant form of capital is changing: it was land → labor → money. Now intelligence. This requires a new economic paradigm.\n\nIn latest cyber•Economy podcast, we discuss a new, first-principles model for a world of abundant AI with @EMostaque (founder of @StabilityAI @ii_posts)\n\nYT: https://lnkd.in/dvTuF54a\nSpotify: https://lnkd.in/dhDh9js6",
-            "attributes": [],
-            "comments": [],
-            "reactions": [
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Alena",
-                  "lastName": "Khromenkova",
-                  "occupation": "Head of People @cyber•Fund | Web3 | crypto | blockchain",
-                  "id": "452316929",
-                  "publicId": "sozidai123",
-                  "trackingId": "erTF+XN2RpGtLfUfvkdwBQ==",
-                  "profileId": "ACoAABr1zwEBrMhwYq0CA2fXwAqm9zwOMyeIIhw",
-                  "picture": "https://media.licdn.com/dms/image/v2/D4E03AQEk_lqTKKme9A/profile-displayphoto-crop_800_800/B4EZgdHe1MHoAM-/0/1752835157919?e=1762992000&v=beta&t=cGUccxWaz4Xb553N_ve_PC-C-WJtdQWiLzg8bL5hSi0",
-                  "backgroundImage": "https://media.licdn.com/dms/image/v2/D4E16AQEZBDx5Pe2ewg/profile-displaybackgroundimage-shrink_200_800/B4EZgdHs4iHEAY-/0/1752835215935?e=1762992000&v=beta&t=A_-c2AhUxy5FE4jRvqKg-djfgDEq9O_uVkNsKuy546Y"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Dogan",
-                  "lastName": "Alpaslan",
-                  "occupation": "Researcher - Cyber",
-                  "id": "867379688",
-                  "publicId": "doganalpaslan",
-                  "trackingId": "BC2G1666SDSvN/yDpcpQ0Q==",
-                  "profileId": "ACoAADOzKegBIKuSjLKNZSFMb2jYmPTnE0mjQRI",
-                  "picture": "https://media.licdn.com/dms/image/v2/D4D03AQGFpcJ6h0_Feg/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1690884707249?e=1762992000&v=beta&t=c7TSmkcAqttBnGNxTLWnL1L_cG4t5lZUQs8GNTbL8Wo"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Volodymyr",
-                  "lastName": "Pavlyshyn",
-                  "occupation": "Senior Staff Engineer / Architect | SSI | Agentic AI | Agent Protocols | personal AI | privacy first | Personal Knowledge Graphs | local first | architecture",
-                  "id": "11227534",
-                  "publicId": "pavlyshyn",
-                  "trackingId": "NqT3/Ie1QO+n1en4exBmZg==",
-                  "profileId": "ACoAAACrUY4BQ3C_tMWZOMlbvsUDpyQogIo6lWI",
-                  "picture": "https://media.licdn.com/dms/image/v2/D4E03AQFUZ_1_QS8acg/profile-displayphoto-shrink_400_400/B4EZYLptfrGgAk-/0/1743952206420?e=1762992000&v=beta&t=ysUYnaCxRrNLT4JYSaHQ4ppCzWd7ZXFB4i8cK2YmeP8",
-                  "backgroundImage": "https://media.licdn.com/dms/image/v2/D4E16AQG5gLuA4fOA3Q/profile-displaybackgroundimage-shrink_350_1400/B4EZgXYScIHEAY-/0/1752738900576?e=1762992000&v=beta&t=Ro6c8tQcBMKh6UqTLtibTqoYmKAs2OKWabWTZm7TtqQ"
-                }
-              }
-            ],
-            "numShares": 1,
-            "numLikes": 3,
-            "numComments": 0,
-            "canReact": true,
-            "canPostComments": true,
-            "canShare": true,
-            "commentingDisabled": false,
-            "allowedCommentersScope": "ALL",
-            "rootShare": true,
-            "shareAudience": "PUBLIC",
-            "author": {
-              "name": "cyber•Fund",
-              "universalName": "cyberfund",
-              "trackingId": "Ha28GQ06S+yHErqjfJ0ltg==",
-              "active": true,
-              "showcase": false,
-              "entityUrn": "urn:li:fs_miniCompany:5006854",
-              "logoUrl": "https://media.licdn.com/dms/image/v2/D4D0BAQGaBdgQBBsc6w/company-logo_200_200/company-logo_200_200/0/1724842973856/cyberfund_logo?e=1762992000&v=beta&t=ECUh4W8lI61SeNi2sbw-MxuM_UzMecwSKCtD3qHuumw"
-            },
-            "authorProfilePicture": "https://media.licdn.com/dms/image/v2/D4D0BAQGaBdgQBBsc6w/company-logo_200_200/company-logo_200_200/0/1724842973856/cyberfund_logo?e=1762992000&v=beta&t=ECUh4W8lI61SeNi2sbw-MxuM_UzMecwSKCtD3qHuumw",
-            "authorType": "Company",
-            "authorProfileId": "company",
-            "authorFollowersCount": "1,655",
-            "authorName": "cyber•Fund",
-            "authorProfileUrl": "https://www.linkedin.com/company/cyberfund/posts",
-            "authorUrn": "urn:li:company:5006854",
-            "postedAtTimestamp": 1760026455237,
-            "postedAtISO": "2025-10-09T16:14:15.237Z"
-          },
-          "isActivity": false,
-          "shareUrn": "urn:li:share:7383473308970762240",
-          "attributes": [
-            {
-              "start": 199,
-              "length": 13,
-              "type": "PROFILE_MENTION",
-              "profile": {
-                "firstName": "Emad",
-                "lastName": "Mostaque",
-                "occupation": "Founder",
-                "id": "1122976756",
-                "publicId": "emad-mostaque-9840ba274",
-                "trackingId": "VuM1HAnBQfO7v5CaQ8hFQQ==",
-                "profileId": "ACoAAELvQ_QBBpXqO6RZqlqiky5XDnxsF4rACL8",
-                "picture": "https://media.licdn.com/dms/image/v2/D4E03AQEdh0qAVvED0w/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1706492380876?e=1762992000&v=beta&t=YoorGcgBsZt1gD5NLd9Kc2VfM07lgOHXOL1KhYJkcNA"
-              }
-            }
-          ],
-          "comments": [],
-          "reactions": [
-            {
-              "type": "APPRECIATION",
-              "profile": {
-                "firstName": "Steve",
-                "lastName": "McKinney",
-                "occupation": "Bringing Proactive Agility™ to Your Organization: Turn Uncertainty Into Advantage.",
-                "id": "1702853",
-                "publicId": "mckinneysteve",
-                "trackingId": "KBkOiuMJTjuZS3JcmAqSwQ==",
-                "profileId": "ACoAAAAZ-8UBMfL815b1ioCHRBB978ZaiRfehKU",
-                "picture": "https://media.licdn.com/dms/image/v2/D5603AQFfMPIThYfr0w/profile-displayphoto-scale_200_200/B56Zg7UmV6HcAk-/0/1753341913044?e=1762992000&v=beta&t=-uFtmd6IE8KcMc1SfmXy0vP-WzHI9p3UkZclNqeL1Jw",
-                "backgroundImage": "https://media.licdn.com/dms/image/v2/D5616AQGSqVy-tPkFtQ/profile-displaybackgroundimage-shrink_350_1400/B56ZmVAZo5JwAY-/0/1759141535298?e=1762992000&v=beta&t=LjHgHCUigwixkKQdXRtQV4j-LFGBNYiC8dHaXDx1bHI"
-              }
-            },
-            {
-              "type": "LIKE",
-              "profile": {
-                "firstName": "Surabhi",
-                "lastName": "Shenoy",
-                "occupation": "2X Exits | Built $MM Businesses over 20 years | CEO Coach | Helping founders grow revenue, profit and valuation",
-                "id": "780716456",
-                "publicId": "surabhi-shenoy-ceo-coach",
-                "trackingId": "Pkz0NVkeSu+CusCMjIROXQ==",
-                "profileId": "ACoAAC6IyagB63u_arZR9u6AI0smjQSx1sD1ucA",
-                "picture": "https://media.licdn.com/dms/image/v2/D4D03AQGt2R1_NXSHCA/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1710947216317?e=1762992000&v=beta&t=x4gUNRpe7sEqTYlRChN_jw1zVy-kpKHBdc2Tk3zJrkI",
-                "backgroundImage": "https://media.licdn.com/dms/image/v2/D4D16AQGkp0tW6FPCSw/profile-displaybackgroundimage-shrink_350_1400/B4DZm4j09XH4AY-/0/1759738024772?e=1762992000&v=beta&t=qbmfqHpgMwcsJlY-unv4bicm8o6lZzLCfDiC4h5GAes"
-              }
-            }
-          ],
-          "numShares": 0,
-          "numLikes": 2,
-          "numComments": 0,
-          "canReact": true,
-          "canPostComments": true,
-          "canShare": true,
-          "commentingDisabled": false,
-          "allowedCommentersScope": "ALL",
-          "rootShare": false,
-          "shareAudience": "PUBLIC",
-          "author": {
-            "firstName": "Vitaly",
-            "lastName": "Kleban",
-            "occupation": "AI Research & Investments @ cyber•Fund | ex-large scale infra @ Everynet | Cybernetic economy | Incentive-aligned agents | Statistical Contracts Theory | Communication-efficient training | TinyML & LoRaWAN Contributor",
-            "id": "256373395",
-            "publicId": "vkleban",
-            "trackingId": "1M9NwB/mTsufNG1rRBPj8w==",
-            "profileId": "ACoAAA9H8pMBxgb-zlRjZWHd4k2hxDN1JF35wWI",
-            "picture": "https://media.licdn.com/dms/image/v2/D4D03AQEkGrSL1GC_vg/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1728294042041?e=1762992000&v=beta&t=g1wQ5092UvwPBv4j6UtPx3MGIskAd4b8RZR5zvwHcYY",
-            "backgroundImage": "https://media.licdn.com/dms/image/v2/C4D16AQHR2unQbxuy4A/profile-displaybackgroundimage-shrink_200_800/profile-displaybackgroundimage-shrink_200_800/0/1660750091894?e=1762992000&v=beta&t=b1_bBB0zhliXxBoe9RqYYlaHkUBLfb_lgvNrPuw58hg"
-          },
-          "authorProfilePicture": "https://media.licdn.com/dms/image/v2/D4D03AQEkGrSL1GC_vg/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1728294042041?e=1762992000&v=beta&t=g1wQ5092UvwPBv4j6UtPx3MGIskAd4b8RZR5zvwHcYY",
-          "authorUrn": "urn:li:member:256373395",
-          "inputUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
-        }
-      },
-      {
-        "json": {
-          "urn": "urn:li:activity:7383472547847192577",
-          "text": "Totally agree! We reached the point that we need to have a serious discussion of privacy laws and policies. In fact I sympathize with privacy researchers and advocates as they are fighting unfair fight.\n #security #privacy #responsible_ai #ai_safety",
-          "url": "https://www.linkedin.com/posts/ebinsaad_ai-creativity-futurism-activity-7383472547847192577-tuLP?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-          "postedAtTimestamp": 1760357033693,
-          "postedAtISO": "2025-10-13T12:03:53.693Z",
-          "timeSincePosted": "10m",
-          "isRepost": true,
-          "authorType": "Person",
-          "authorProfileUrl": "https://www.linkedin.com/in/ebinsaad?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAABntbBcBIwZkylqR0PogFXi2zPSX7bWWuak",
-          "authorProfileId": "ebinsaad",
-          "authorHeadline": "Cybersecurity, Dependability and Resilient Computing",
-          "authorName": "Sherif Saad",
-          "image": "https://media.licdn.com/dms/image/v2/D4D05AQEXCf55imlT8A/videocover-low/B4DZnFWII9IcB8-/0/1759952541507?e=1760965200&v=beta&t=LFOAm6bJZQ1AsslDnSo4It3pBvx7E9_mJoWPk3lD3Fw",
-          "type": "text",
-          "resharedPost": {
-            "type": "linkedinVideo",
-            "linkedinVideo": {
-              "videoPlayMetadata": {
-                "duration": 86566,
-                "thumbnail": {
-                  "artifacts": [
-                    {
-                      "width": 360,
-                      "digitalmediaAsset": "urn:li:digitalmediaAsset:urn:li:digitalmediaAsset:D4D05AQEXCf55imlT8A",
-                      "fileIdentifyingUrlPathSegment": "low/B4DZnFWII9IcB8-/0/1759952541507?e=1760965200&v=beta&t=LFOAm6bJZQ1AsslDnSo4It3pBvx7E9_mJoWPk3lD3Fw",
-                      "expiresAt": 1760965200000,
-                      "height": 640
-                    },
-                    {
-                      "width": 720,
-                      "digitalmediaAsset": "urn:li:digitalmediaAsset:urn:li:digitalmediaAsset:D4D05AQEXCf55imlT8A",
-                      "fileIdentifyingUrlPathSegment": "high/B4DZnFWII9IcCA-/0/1759952541479?e=1760965200&v=beta&t=Kt_H1rVK7Xoz0Ma1WlCJagYyGCmg3PKUlFzJ1_V5VhQ",
-                      "expiresAt": 1760965200000,
-                      "height": 1280
-                    }
-                  ],
-                  "rootUrl": "https://media.licdn.com/dms/image/v2/D4D05AQEXCf55imlT8A/videocover-"
-                },
-                "progressiveStreams": [
-                  {
-                    "streamingLocations": [
-                      {
-                        "url": "https://dms.licdn.com/playlist/vid/v2/D4D05AQEXCf55imlT8A/mp4-720p-30fp-crf28/B4DZnFWII9IcBo-/0/1759952552663?e=1760965200&v=beta&t=Gi8RtpTl4pZqG_aOsBkFW0xWb0swAoufItwt-FiNAj0",
-                        "expiresAt": 1760965200000
-                      }
-                    ],
-                    "size": 0,
-                    "bitRate": 244284,
-                    "width": 720,
-                    "mediaType": "video/mp4",
-                    "height": 1280
-                  },
-                  {
-                    "streamingLocations": [
-                      {
-                        "url": "https://dms.licdn.com/playlist/vid/v2/D4D05AQEXCf55imlT8A/mp4-640p-30fp-crf28/B4DZnFWII9IcBk-/0/1759952549382?e=1760965200&v=beta&t=gHvvyT4Iv3fZWs_coLF3pkyKXVjAAgFblrTAhts0wt4",
-                        "expiresAt": 1760965200000
-                      }
-                    ],
-                    "size": 0,
-                    "bitRate": 189477,
-                    "width": 640,
-                    "mediaType": "video/mp4",
-                    "height": 1138
-                  }
-                ],
-                "transcripts": [],
-                "entityUrn": "urn:li:digitalmediaAsset:D4D05AQEXCf55imlT8A",
-                "provider": "UGC",
-                "aspectRatio": 0.5625,
-                "media": "urn:li:digitalmediaAsset:D4D05AQEXCf55imlT8A",
-                "adaptiveStreams": [
-                  {
-                    "initialBitRate": 3145165,
-                    "protocol": "HLS",
-                    "mediaType": "application/vnd.apple.mpegURL",
-                    "masterPlaylists": [
-                      {
-                        "url": "https://dms.licdn.com/playlist/vid/dynamic/D4D05AQEXCf55imlT8A/BAgeTgv-GuGMNvQVxv1?e=1760965200&v=beta&t=T9rMVujMJ0UG6iHScURPTDzwWDt3wwxwttXqLWbd8-w",
-                        "expiresAt": 1760965200000
-                      }
-                    ]
-                  },
-                  {
-                    "initialBitRate": 3145165,
-                    "protocol": "DASH",
-                    "mediaType": "application/dash+xml",
-                    "masterPlaylists": [
-                      {
-                        "url": "https://dms.licdn.com/playlist/vid/dash/D4D05AQEXCf55imlT8A/BAgeTgv-GuGMNvQVxv1?e=1760965200&v=beta&t=XwmqEmO3F8qLWB1W19LSx9w7mbrVyjN-lx5aGLf0eTc",
-                        "expiresAt": 1760965200000
-                      }
-                    ]
-                  }
-                ],
-                "trackingId": "PJy/3JmJQz+D4qseIS/jaw=="
-              }
-            },
-            "isActivity": false,
-            "urn": "urn:li:activity:7381776049526833152",
-            "url": "https://www.linkedin.com/posts/smmeherali_ai-creativity-futurism-activity-7381776049526833152-GjLx?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-            "timeSincePosted": "4d",
-            "shareUrn": "urn:li:ugcPost:7381775980928864257",
-            "text": "Dutch reporter Alexander Klöpping shows how powerful facial recognition has become in Amsterdam. 👀\n\nFor a segment on the Dutch TV show “Eva,” he used just a few seconds of video to uncover strangers’ names, jobs, and personal info — all using AI.\n\nThe results were fast, accurate, and honestly, a little scary. 🙄\n\nCredit Insta: @alexandernl\n\n#ai #creativity #futurism #technology #innovation #artificialintelligence #cybersecurity",
-            "attributes": [],
-            "comments": [
-              {
-                "time": 1760354278432,
-                "link": "https://www.linkedin.com/feed/update/urn:li:ugcPost:7381775980928864257?commentUrn=urn%3Ali%3Acomment%3A%28ugcPost%3A7381775980928864257%2C7383460991440965632%29&dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287383460991440965632%2Curn%3Ali%3AugcPost%3A7381775980928864257%29",
-                "text": "It’s a reminder that as these tools get more accurate, society needs to decide where to draw the line between innovation and intrusion.",
-                "entities": [],
-                "pinned": false,
-                "originalLanguage": "English",
-                "author": {
-                  "firstName": "Muhammad Osama",
-                  "lastName": "Munir",
-                  "occupation": "Director Software Development | Digital Transformation Specialist | Solution Architect | Digital Identity & eKYC Expert | Certified Scrum Master",
-                  "id": "72869034",
-                  "publicId": "muhammad-osama-munir-6b64a120",
-                  "trackingId": "Iu5PK7GQQbihdSSIGRyTjw==",
-                  "profileId": "ACoAAARX5KoB97biHA7iJRVgak7W7duJZNtbmwE",
-                  "picture": "https://media.licdn.com/dms/image/v2/D4E03AQFH9CDHUqoezQ/profile-displayphoto-scale_200_200/B4EZmAjbIXHcAY-/0/1758798407527?e=1762992000&v=beta&t=e2mXT-2zNi_J5Wya9Wix4DfkP7bzfOr2LXSULTIAZu4",
-                  "backgroundImage": "https://media.licdn.com/dms/image/v2/D4E16AQGfE5Gvg5eIAQ/profile-displaybackgroundimage-shrink_350_1400/B4EZVqOxgZHgAY-/0/1741244014872?e=1762992000&v=beta&t=Hos8o8qQOzDnI1CyroMU3fypHggEDXnB_NM9AZ3wvdQ",
-                  "distance": "OUT_OF_NETWORK"
-                }
-              }
-            ],
-            "reactions": [
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Vaishnavi",
-                  "lastName": "Aher",
-                  "occupation": "Cyber & Digital Science Student | Passionate About Cybersecurity | Exploring Real-World Digital Threats",
-                  "id": "1266752264",
-                  "publicId": "vaishnavi-aher-2882962b4",
-                  "trackingId": "hyv5ko5DQreAxVo32xWemQ==",
-                  "profileId": "ACoAAEuBGwgB84K5Kz4ENHTIDCMweyVaqF_j3tY",
-                  "picture": "https://media.licdn.com/dms/image/v2/D5635AQFJ2qB6nzkyCw/profile-framedphoto-shrink_400_400/B56Zf0rVmAHoAk-/0/1752156691141?e=1760965200&v=beta&t=iREN3jh9w4p_KFwMkMVlRBoYuD8_gMbC06aB3j7Mqc0"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Jesse",
-                  "lastName": "van den Berg",
-                  "occupation": "Trust & Safety New Associate - Dutch @ Accenture | GDPR Compliance, Privacy Operations",
-                  "id": "820884564",
-                  "publicId": "j-vdberg",
-                  "trackingId": "f7qh9raPRmWfmSiA7FPABw==",
-                  "profileId": "ACoAADDttFQBnmuWb5Mxr0dBjY94_dcJ2seoFtU",
-                  "picture": "https://media.licdn.com/dms/image/v2/D4E03AQGZgM-Ujo9YRg/profile-displayphoto-scale_400_400/B4EZh.09FWGUAk-/0/1754474469201?e=1762992000&v=beta&t=z80tw_7qqYcYV2mcZyAY2uA7V-MssifdpaKLezaCnBs",
-                  "backgroundImage": "https://media.licdn.com/dms/image/v2/D4E16AQELep-aihhk9Q/profile-displaybackgroundimage-shrink_200_800/profile-displaybackgroundimage-shrink_200_800/0/1710178134789?e=1762992000&v=beta&t=xO46B__xlIWN_MJIK543BaESEWQE9FHUkb8KHVuCs9A"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Dr Rakshith",
-                  "lastName": "J",
-                  "occupation": "Radiologist | Exploring Cybersecurity & Data Science | Healthcare • Technology • Compliance",
-                  "id": "759434428",
-                  "publicId": "dr-rakshith-j-6243bb192",
-                  "trackingId": "nUObO2PiRIOsCiUFYgJO0A==",
-                  "profileId": "ACoAAC1EDLwBaHEPkCZRQL8ynKtpITozxknWwLI",
-                  "picture": "https://media.licdn.com/dms/image/v2/D5603AQFRpjkBQuIseQ/profile-displayphoto-scale_200_200/B56ZjK7XeeG0AY-/0/1755751218628?e=1762992000&v=beta&t=maNKShNkuDUECgtbOZMjXkh0zvu_4kk90sJgSXOmnyc"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Sahil",
-                  "lastName": "Hussain",
-                  "occupation": "Student at University of Sindh, Jamshoro",
-                  "id": "1599101644",
-                  "publicId": "sahil-hussain-064652387",
-                  "trackingId": "kcKNOclUR+WwbyOMoUuQQg==",
-                  "profileId": "ACoAAF9QWswBFJKfeaj3UuAok7X1krFf6QroD9E"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "muhammad",
-                  "lastName": "yusuf",
-                  "occupation": "librarian at trans 7",
-                  "id": "199736585",
-                  "publicId": "muhammad-yusuf-375a8456",
-                  "trackingId": "FLhO67NARgiPSpxBD+aUEA==",
-                  "profileId": "ACoAAAvnvQkBsDewZC5Mbk5wPerR-Pq3bkeewl0",
-                  "picture": "https://media.licdn.com/dms/image/v2/C5103AQEKJH452UOF7g/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1516947489963?e=1762992000&v=beta&t=DS43fRE1JBDlXBkbJTEy4RKusEJKixlBtKQaePSPov0"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Stefan",
-                  "lastName": "Beierle",
-                  "occupation": "Independent AI Security Consultant | Operator-Level Strategy | “I don’t trust any system I haven’t opened myself.”باحث مستقل في أمن الذكاء الاصطناعي | استراتيجي بمستوى المشغّل | لا أثق بأي نظام لم أفتحه بنفسي",
-                  "id": "625441533",
-                  "publicId": "stefan-beierle",
-                  "trackingId": "GnMxeeMORz+hmwA472HXyg==",
-                  "profileId": "ACoAACVHev0B3LeEY5gXyjWzkLly47wmEXonthQ",
-                  "picture": "https://media.licdn.com/dms/image/v2/D4E03AQEGBFee0EH1Xw/profile-displayphoto-scale_200_200/B4EZijQC0DGoAY-/0/1755085549479?e=1762992000&v=beta&t=NbKcCPMVTLeCsUgOA8XpW94lTkIpD7QmUyZd-3JTEds",
-                  "backgroundImage": "https://media.licdn.com/dms/image/v2/D4E16AQG8b2w8AZU1ug/profile-displaybackgroundimage-shrink_200_800/B4EZijI_5EGYAY-/0/1755083703695?e=1762992000&v=beta&t=Ooa1Y1uGBQf4Y4gai446ouNJ4ethfcmwYK1NMg3z_Cc"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Nipun",
-                  "lastName": "Darge",
-                  "occupation": "“Cyber Crime Investigator | Digital Forensics Expert | Ethical Hacker | Malware Analysis & Incident Responser | CCNA, CEH, CHFI “",
-                  "id": "1598011252",
-                  "publicId": "nipun-darge-044207387",
-                  "trackingId": "17fMKihiS3qYbh7Qc3DKtg==",
-                  "profileId": "ACoAAF8_t3QBX5zeD3rsZrx2INX2A249fHirzgg",
-                  "picture": "https://media.licdn.com/dms/image/v2/D5635AQHD20hzp47yLA/profile-framedphoto-shrink_100_100/B56ZmHMFAhG4Ak-/0/1758909714948?e=1760965200&v=beta&t=q3B_SA1bzssT-mWJWqEVqUvuDae9XkxB4UwnEZqUYwY",
-                  "backgroundImage": "https://media.licdn.com/dms/image/v2/D5616AQGVeteBgT8a9w/profile-displaybackgroundimage-shrink_350_1400/B56ZmbfvsJH8Ag-/0/1759250417019?e=1762992000&v=beta&t=nj3xPAmwHvV_cnD8G8L_IAJIHVKnuWGEXiaaOUDWfBg"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Marco √",
-                  "lastName": "Maas",
-                  "occupation": "Digitalisierung durchdringen",
-                  "id": "117256951",
-                  "publicId": "marco-√-maas-04732933",
-                  "trackingId": "gp4tgFRMTz25KhXk/1dw1w==",
-                  "profileId": "ACoAAAb9MvcB0uYSwSj23q6fk3vruWYMmuZsRjU",
-                  "picture": "https://media.licdn.com/dms/image/v2/C4E03AQGeb8gRGkFm8A/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1564603558908?e=1762992000&v=beta&t=fDdc4eIBn52z65tTUu3fzaChSL6XQYjFGX_g0nYegvo",
-                  "backgroundImage": "https://media.licdn.com/dms/image/v2/C4E16AQGRBltd12DXgw/profile-displaybackgroundimage-shrink_200_800/profile-displaybackgroundimage-shrink_200_800/0/1591621199889?e=1762992000&v=beta&t=OJsBT0AwJbDc1-Ff5TkyiN97QBQ6Rg_5HWWZngzl8vg"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Dr Vishan",
-                  "lastName": "Das",
-                  "occupation": "MBBS, FCPS Cardiologist, ECFMG Certified",
-                  "id": "253838168",
-                  "publicId": "dr-vishan-das-10801571",
-                  "trackingId": "r2pbKxdfRzCsckWSM6od7A==",
-                  "profileId": "ACoAAA8hQ1gB2GkqtXtNgMCxXdkFXZSPKWlgvtw",
-                  "picture": "https://media.licdn.com/dms/image/v2/D4D03AQG2W8Q9AZlMTw/profile-displayphoto-scale_200_200/B4DZnPRRyqJcAY-/0/1760119039714?e=1762992000&v=beta&t=kWFnLWro5wBb2MPtWjKkrQARyWz3q-6UpBQjUza2aOA"
-                }
-              },
-              {
-                "type": "LIKE",
-                "profile": {
-                  "firstName": "Komail",
-                  "lastName": "Ahmad",
-                  "occupation": "Specialising in Data Science | Full Stack Developer | Python, Django & Web Development",
-                  "id": "1026725524",
-                  "publicId": "get-in-touch-with-komail-ahmad",
-                  "trackingId": "RKguCiyuQ42HW3aUbxksFQ==",
-                  "profileId": "ACoAAD0ylpQBsO5cmH5zSYQBQaxLPJBrWX5XMeY",
-                  "picture": "https://media.licdn.com/dms/image/v2/D4D03AQEgx9tg6IMe0A/profile-displayphoto-shrink_400_400/B4DZReoUt1GkAg-/0/1736754417827?e=1762992000&v=beta&t=UOhDhZS1zmDvnOzG_CsKt70otFitjgvfQdVBiSEoci8",
-                  "backgroundImage": "https://media.licdn.com/dms/image/v2/D4D16AQFrISxTWRaRLw/profile-displaybackgroundimage-shrink_200_800/profile-displaybackgroundimage-shrink_200_800/0/1691951245346?e=1762992000&v=beta&t=84x1RtjyLw1JDdojvAjZFXncdQ0G3Wtf5WPgaXd-8rA"
-                }
-              }
-            ],
-            "numShares": 3,
-            "numLikes": 11,
-            "numComments": 1,
-            "canReact": true,
-            "canPostComments": true,
-            "canShare": true,
-            "commentingDisabled": false,
-            "allowedCommentersScope": "ALL",
-            "rootShare": true,
-            "shareAudience": "PUBLIC",
-            "author": {
-              "firstName": "Meher",
-              "lastName": "Ali",
-              "occupation": "The strongest person in the world is he who stands most alone. We come into the world alone and we go out of the world alone yet. 🍉 Marketing Strategy | Problem Solving | Digital Marketing Analyst | Research Analyst",
-              "id": "299295121",
-              "publicId": "smmeherali",
-              "trackingId": "k1jxmgxnQ5ilMSWgH/9c7Q==",
-              "profileId": "ACoAABHW4ZEBgFErXNOIyrm0Cop2yqS3Jc-wBLY",
-              "picture": "https://media.licdn.com/dms/image/v2/D4D03AQEUKgRc5I30EA/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1710827496096?e=1762992000&v=beta&t=jI750SZ_NpLeXl1NIlr3GwRhzdoE4WVFY8-jK9TQKSU",
-              "backgroundImage": "https://media.licdn.com/dms/image/v2/C4D16AQH7_u15NuzYmQ/profile-displaybackgroundimage-shrink_200_800/profile-displaybackgroundimage-shrink_200_800/0/1668275910451?e=1762992000&v=beta&t=SuQBZV3A9PMHoXEWz3uBux7Sk466vmQsUKPTWRiTdT8"
-            },
-            "authorProfileId": "smmeherali",
-            "authorProfilePicture": "https://media.licdn.com/dms/image/v2/D4D03AQEUKgRc5I30EA/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1710827496096?e=1762992000&v=beta&t=jI750SZ_NpLeXl1NIlr3GwRhzdoE4WVFY8-jK9TQKSU",
-            "authorType": "Person",
-            "authorHeadline": "The strongest person in the world is he who stands most alone. We come into the world alone and we go out of the world alone yet. 🍉 Marketing Strategy | Problem Solving | Digital Marketing Analyst | Research Analyst",
-            "authorName": "Meher Ali",
-            "authorProfileUrl": "https://www.linkedin.com/in/smmeherali?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAABHW4ZEBgFErXNOIyrm0Cop2yqS3Jc-wBLY",
-            "authorUrn": "urn:li:member:299295121",
-            "postedAtTimestamp": 1759952556974,
-            "postedAtISO": "2025-10-08T19:42:36.974Z"
-          },
-          "isActivity": false,
-          "shareUrn": "urn:li:ugcPost:7383472547264102400",
-          "attributes": [],
-          "comments": [],
-          "reactions": [],
-          "numShares": 0,
-          "numLikes": 0,
-          "numComments": 0,
-          "canReact": true,
-          "canPostComments": true,
-          "canShare": true,
-          "commentingDisabled": false,
-          "allowedCommentersScope": "ALL",
-          "rootShare": false,
-          "shareAudience": "PUBLIC",
-          "author": {
-            "firstName": "Sherif",
-            "lastName": "Saad",
-            "occupation": "Cybersecurity, Dependability and Resilient Computing",
-            "id": "434990103",
-            "publicId": "ebinsaad",
-            "trackingId": "X+w3wwQ+Tt2GNIz7VzV0yQ==",
-            "profileId": "ACoAABntbBcBIwZkylqR0PogFXi2zPSX7bWWuak",
-            "picture": "https://media.licdn.com/dms/image/v2/C4D03AQFzan4OAOn99w/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1574354448052?e=1762992000&v=beta&t=xreSZ5C5QXdQ194OhRCFnZfYetapWcCLP9vuOYcP_Ho"
-          },
-          "authorProfilePicture": "https://media.licdn.com/dms/image/v2/C4D03AQFzan4OAOn99w/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1574354448052?e=1762992000&v=beta&t=xreSZ5C5QXdQ194OhRCFnZfYetapWcCLP9vuOYcP_Ho",
-          "authorUrn": "urn:li:member:434990103",
-          "inputUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
-        }
-      },
-      {
-        "json": {
-          "urn": "urn:li:activity:7383472496693637120",
-          "text": "The future of automation is transforming industries at an unprecedented pace 🤖✨. From Industry 4.0’s cyber-physical systems and AI-driven predictive maintenance to autonomous vehicles 🚗💨 and collaborative robots 🤝, automation is reshaping how we work and live.\n\nKey highlights include:\n🔹 Integration of AI, robotics, and IoT for smarter, connected systems 🌐💡\n🔹 Advancements in healthcare automation with robotic surgery 🤖🏥 and telemedicine 📱💉\n🔹 Ethical challenges around workforce adaptation 👥⚖️ and cybersecurity 🔒\n🔹 Future trends involving quantum computing ⚛️, edge AI ⚡, and smart infrastructure 🏗️\n\nSustainable and ethical adoption of automation will be critical to unlocking its full potential for efficiency, safety, and innovation 🌱🚀.\n\nWhat excites you the most about the evolving automation landscape? 🤔💭\n\n#Automation #Industry40 #AI #Robotics #FutureOfWork #Sustainability",
-          "url": "https://www.linkedin.com/posts/bharathiraja-r-a4361637a_automation-industry40-ai-activity-7383472496693637120-Yuhk?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-          "postedAtTimestamp": 1760357021497,
-          "postedAtISO": "2025-10-13T12:03:41.497Z",
-          "timeSincePosted": "10m",
-          "isRepost": false,
-          "authorType": "Person",
-          "authorProfileUrl": "https://www.linkedin.com/in/bharathiraja-r-a4361637a?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAAF21J1MBPxAzQFu1VLPg3tyeu82MDibNMUE",
-          "authorProfileId": "bharathiraja-r-a4361637a",
-          "authorHeadline": "Software Engineer at Karpaga Vinayaga College of Engineering and Technology automation /robotics/iot combine system/web development lener",
-          "authorName": "BHARATHIRAJA R",
-          "image": "https://media.licdn.com/dms/image/v2/D4E22AQHMGjgwsxILow/feedshare-shrink_800/B4EZnddDgcKkAo-/0/1760357020105?e=1762992000&v=beta&t=7_iMZP9Oc5aZzD7OHW6nApmTdd3OEv3XsQmbHymstxY",
-          "type": "image",
-          "images": [
-            "https://media.licdn.com/dms/image/v2/D4E22AQHMGjgwsxILow/feedshare-shrink_800/B4EZnddDgcKkAo-/0/1760357020105?e=1762992000&v=beta&t=7_iMZP9Oc5aZzD7OHW6nApmTdd3OEv3XsQmbHymstxY"
-          ],
-          "isActivity": false,
-          "shareUrn": "urn:li:share:7383472495619776512",
-          "attributes": [],
-          "comments": [],
-          "reactions": [],
-          "numShares": 0,
-          "numLikes": 0,
-          "numComments": 0,
-          "canReact": true,
-          "canPostComments": true,
-          "canShare": true,
-          "commentingDisabled": false,
-          "allowedCommentersScope": "ALL",
-          "rootShare": true,
-          "shareAudience": "PUBLIC",
-          "author": {
-            "firstName": "BHARATHIRAJA",
-            "lastName": "R",
-            "occupation": "Software Engineer at Karpaga Vinayaga College of Engineering and Technology automation /robotics/iot combine system/web development lener",
-            "id": "1572153171",
-            "publicId": "bharathiraja-r-a4361637a",
-            "trackingId": "lDxqE2+tTSqIUONQejpfwg==",
-            "profileId": "ACoAAF21J1MBPxAzQFu1VLPg3tyeu82MDibNMUE",
-            "picture": "https://media.licdn.com/dms/image/v2/D4D03AQENlDdmqNx9pA/profile-displayphoto-shrink_100_100/B4DZij4_GJHwAY-/0/1755096282975?e=1762992000&v=beta&t=xRK-ef3Q4SllinOq-8do6u9HkkzvqLjmCg_nhzq6Du8",
-            "backgroundImage": "https://media.licdn.com/dms/image/v2/D4E16AQFbp0n1V9TntA/profile-displaybackgroundimage-shrink_350_1400/B4EZjuQ2A1GcAo-/0/1756344050555?e=1762992000&v=beta&t=IJscuPnJy0If4cEgwdacV1DRakcFC2SBWluYd-eeJa0"
-          },
-          "authorProfilePicture": "https://media.licdn.com/dms/image/v2/D4D03AQENlDdmqNx9pA/profile-displayphoto-shrink_100_100/B4DZij4_GJHwAY-/0/1755096282975?e=1762992000&v=beta&t=xRK-ef3Q4SllinOq-8do6u9HkkzvqLjmCg_nhzq6Du8",
-          "authorUrn": "urn:li:member:1572153171",
-          "inputUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
-        }
-      },
-      {
-        "json": {
-          "urn": "urn:li:activity:7383471926192705537",
-          "text": "🩺 Less Paperwork, More Care – Thanks to #AiInAction\nIn South Australia, an AI scribe turns doctor–patient talks into instant notes, freeing doctors to focus on patients. Empowering, not replacing. ✨\n\nhttps://bit.ly/42O3zyK\n\n#AI #Healthcare #Innovation #FutureOfMedicine",
-          "title": "🩺 Less Paperwork, More Care – Thanks to #AiInAction",
-          "url": "https://www.linkedin.com/posts/ecommercebanner_less-paperwork-more-care-thanks-to-activity-7383471926192705537-reyA?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-          "postedAtTimestamp": 1760356885479,
-          "postedAtISO": "2025-10-13T12:01:25.479Z",
-          "timeSincePosted": "12m",
-          "isRepost": false,
-          "authorType": "Company",
-          "authorProfileUrl": "https://www.linkedin.com/showcase/ecommercebanner/posts",
-          "authorProfileId": "showcase",
-          "authorFollowersCount": "13",
-          "authorName": "eCommerceBanner",
-          "image": "https://media.licdn.com/dms/image/v2/D4D10AQFCJKB5M1b1EA/ads-video-thumbnail_720_1280/B4DZndcjJTGkAc-/0/1760356873076?e=1760965200&v=beta&t=ZiaZ20_9hNo-m1PrPLE4MeCd2eJgno_4NOPDxcXlIrE",
-          "type": "linkedinVideo",
-          "linkedinVideo": {
-            "videoPlayMetadata": {
-              "duration": 42566,
-              "thumbnail": {
-                "artifacts": [
-                  {
-                    "width": 405,
-                    "digitalmediaAsset": "urn:li:digitalmediaAsset:urn:li:digitalmediaAsset:D4D10AQFCJKB5M1b1EA",
-                    "fileIdentifyingUrlPathSegment": "https://media.licdn.com/dms/image/v2/D4D10AQFCJKB5M1b1EA/ads-video-thumbnail_720_1280/B4DZndcjJTGkAc-/0/1760356873076?e=1760965200&v=beta&t=ZiaZ20_9hNo-m1PrPLE4MeCd2eJgno_4NOPDxcXlIrE",
-                    "expiresAt": 1760965200000,
-                    "height": 720
-                  }
-                ],
-                "rootUrl": ""
-              },
-              "progressiveStreams": [
-                {
-                  "streamingLocations": [
-                    {
-                      "url": "https://dms.licdn.com/playlist/vid/v2/D4D10AQFCJKB5M1b1EA/mp4-720p-30fp-crf28/B4DZndcjJTGkBw-/0/1760356879437?e=1760965200&v=beta&t=k4R_9ygx7V2tFmHaGkOXIoqmCP7EcQT07nAqY2bpTiw",
-                      "expiresAt": 1760965200000
-                    }
-                  ],
-                  "size": 4117850,
-                  "bitRate": 638004,
-                  "width": 720,
-                  "mediaType": "video/mp4",
-                  "height": 1280
-                },
-                {
-                  "streamingLocations": [
-                    {
-                      "url": "https://dms.licdn.com/playlist/vid/v2/D4D10AQFCJKB5M1b1EA/mp4-640p-30fp-crf28/B4DZndcjJTGkBQ-/0/1760356880149?e=1760965200&v=beta&t=oyDYrY_gM-NAvNUQ5pt0odYe3u88C3_GmhVx__X91jY",
-                      "expiresAt": 1760965200000
-                    }
-                  ],
-                  "size": 3313935,
-                  "bitRate": 486841,
-                  "width": 640,
-                  "mediaType": "video/mp4",
-                  "height": 1138
-                },
-                {
-                  "streamingLocations": [
-                    {
-                      "url": "https://dms.licdn.com/playlist/vid/v2/D4D10AQFCJKB5M1b1EA/mp4-360p-30fp-crf28/B4DZndcjJTGkBs-/0/1760356879438?e=1760965200&v=beta&t=a76AXyGMj9AJwQkuvBYEggM8dI4kkQ1y3wGeWPVojA4",
-                      "expiresAt": 1760965200000
-                    }
-                  ],
-                  "size": 1812199,
-                  "bitRate": 230015,
-                  "width": 360,
-                  "mediaType": "video/mp4",
-                  "height": 640
-                }
-              ],
-              "transcripts": [],
-              "entityUrn": "urn:li:digitalmediaAsset:D4D10AQFCJKB5M1b1EA",
-              "provider": "UGC",
-              "aspectRatio": 0.5625,
-              "media": "urn:li:digitalmediaAsset:D4D10AQFCJKB5M1b1EA",
-              "adaptiveStreams": [
-                {
-                  "initialBitRate": 507472,
-                  "protocol": "HLS",
-                  "mediaType": "application/vnd.apple.mpegURL",
-                  "masterPlaylists": [
-                    {
-                      "url": "https://dms.licdn.com/playlist/vid/dynamic/D4D10AQFCJKB5M1b1EA/BAQanq7KWDU?e=1760965200&v=beta&t=EO3im1Dkb2u-IuxA7HynF8T6Xj7ULW9FIm0Vi-bc_NA",
-                      "expiresAt": 1760965200000
-                    }
-                  ]
-                }
-              ],
-              "trackingId": "5dnm79ULQC+wV/LA0cph7Q=="
-            }
-          },
-          "isActivity": false,
-          "shareUrn": "urn:li:ugcPost:7383471925215322114",
-          "attributes": [],
-          "comments": [],
-          "reactions": [],
-          "numShares": 0,
-          "numLikes": 0,
-          "numComments": 0,
-          "canReact": true,
-          "canPostComments": true,
-          "canShare": true,
-          "commentingDisabled": false,
-          "allowedCommentersScope": "ALL",
-          "rootShare": true,
-          "shareAudience": "PUBLIC",
-          "author": {
-            "name": "eCommerceBanner",
-            "universalName": "ecommercebanner",
-            "trackingId": "H+exPjXiQiOZoxNk0mohIQ==",
-            "active": true,
-            "showcase": true,
-            "entityUrn": "urn:li:fs_miniCompany:106977827",
-            "logoUrl": "https://media.licdn.com/dms/image/v2/D4D0BAQHcNZX7qaEDLA/company-logo_400_400/B4DZg7.U7QG8AY-/0/1753352852075/ecommercebanner_logo?e=1762992000&v=beta&t=tIBNj7q3pFoNUiSSQ_0M4mcIpHIBTl_43paDyACM7e0"
-          },
-          "authorProfilePicture": "https://media.licdn.com/dms/image/v2/D4D0BAQHcNZX7qaEDLA/company-logo_400_400/B4DZg7.U7QG8AY-/0/1753352852075/ecommercebanner_logo?e=1762992000&v=beta&t=tIBNj7q3pFoNUiSSQ_0M4mcIpHIBTl_43paDyACM7e0",
-          "authorUrn": "urn:li:company:106977827",
-          "inputUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
-        }
-      },
-      {
-        "json": {
-          "urn": "urn:li:activity:7383472818203615233",
-          "text": "𝐄𝐦𝐩𝐨𝐰𝐞𝐫𝐢𝐧𝐠 𝐇𝐞𝐚𝐥𝐭𝐡𝐢𝐞𝐫 𝐋𝐢𝐯𝐞𝐬 𝐚𝐧𝐝 𝐒𝐦𝐚𝐫𝐭𝐞𝐫 𝐇𝐨𝐬𝐩𝐢𝐭𝐚𝐥𝐬 𝐰𝐢𝐭𝐡 𝐑𝐞𝐦𝐨𝐭𝐞 𝐏𝐚𝐭𝐢𝐞𝐧𝐭 𝐌𝐨𝐧𝐢𝐭𝐨𝐫𝐢𝐧𝐠 (𝐑𝐏𝐌)\n\nRemote Patient Monitoring isn’t just a patient-care initiative anymore.\nIt’s becoming a 𝐬𝐭𝐫𝐚𝐭𝐞𝐠𝐢𝐜 𝐠𝐫𝐨𝐰𝐭𝐡 𝐚𝐫𝐞𝐚 for hospitals and healthcare solution providers.\n\nBy connecting patients’ vitals through IoT devices, wearables, and mobile apps, RPM enables continuous monitoring, early intervention, and better chronic care management, without overloading the clinical workforce.\nHere’s how forward-thinking healthcare providers and solution companies are using it to drive real impact:\n\n𝐁𝐮𝐢𝐥𝐝𝐢𝐧𝐠 𝐈𝐧𝐭𝐞𝐠𝐫𝐚𝐭𝐞𝐝 𝐂𝐚𝐫𝐞 𝐏𝐥𝐚𝐭𝐟𝐨𝐫𝐦𝐬\nCombining IoT data with EHR systems for a real-time view of each patient, helping physicians make faster, data-backed decisions.\n\n𝐋𝐞𝐯𝐞𝐫𝐚𝐠𝐢𝐧𝐠 𝐀𝐈 𝐟𝐨𝐫 𝐏𝐫𝐞𝐝𝐢𝐜𝐭𝐢𝐯𝐞 𝐈𝐧𝐬𝐢𝐠𝐡𝐭𝐬\nAI-driven RPM systems analyse trends in vital signs and symptoms to predict deterioration before it occurs, turning data into prevention.\n\n𝐄𝐱𝐩𝐚𝐧𝐝𝐢𝐧𝐠 𝐂𝐚𝐫𝐞 𝐑𝐞𝐚𝐜𝐡 𝐰𝐢𝐭𝐡 𝐆𝐂𝐂 𝐒𝐮𝐩𝐩𝐨𝐫𝐭\nGlobal Capability Centres (GCCs) in India are helping healthcare providers scale RPM solutions efficiently, from device integration and app development to analytics, cybersecurity, and 24x7 support.\n\n𝐑𝐞𝐝𝐮𝐜𝐢𝐧𝐠 𝐎𝐩𝐞𝐫𝐚𝐭𝐢𝐨𝐧𝐚𝐥 𝐂𝐨𝐬𝐭𝐬\nWith automated alerts and digital follow-ups, RPM helps hospitals reduce readmissions and optimise resource utilization while improving patient satisfaction.\n\nThe real power of RPM isn’t just remote monitoring; it’s connected intelligence that makes healthcare more responsive, efficient, and humane.\nAs we move toward a more distributed model of care, RPM will be the bridge between hospital excellence and home-based healing.\n\n👉 If you’re building or scaling an RPM solution, how are you approaching data integration and patient engagement?\n\n#RemotePatientMonitoring #DigitalHealth #HealthcareInnovation #AIinHealthcare #HealthTech #GCCIndia #IoTinHealthcare",
-          "url": "https://www.linkedin.com/posts/vishal-panchal-sales-leader_remotepatientmonitoring-digitalhealth-healthcareinnovation-activity-7383472818203615233-l-iK?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-          "postedAtTimestamp": 1760357098151,
-          "postedAtISO": "2025-10-13T12:04:58.151Z",
-          "timeSincePosted": "9m",
-          "isRepost": false,
-          "authorType": "Person",
-          "authorProfileUrl": "https://www.linkedin.com/in/vishal-panchal-sales-leader?miniProfileUrn=urn%3Ali%3Afs_miniProfile%3AACoAAAI9lKIBR55egyyRsFXhzJFS87EENrgBCXs",
-          "authorProfileId": "vishal-panchal-sales-leader",
-          "authorHeadline": "VP Sales at Ace Infoway | Sales & Operation | P&L | LinkedIn Top Voice | Health Tech Advocate | Expert in Generative AI | Vibe Coding | Fintech | IoT | Supply Chain Logistics | ESG & Sustainability",
-          "authorName": "Vishal Panchal",
-          "image": "https://media.licdn.com/dms/image/v2/D4D22AQHT_--al1W7xg/feedshare-shrink_160/B4DZnddXMUIcAc-/0/1760357091649?e=1762992000&v=beta&t=dYRvLCXGuBma5bj-tJfIFNecLZk6ECTENfpdVTFBYYw",
-          "type": "image",
-          "images": [
-            "https://media.licdn.com/dms/image/v2/D4D22AQHT_--al1W7xg/feedshare-shrink_160/B4DZnddXMUIcAc-/0/1760357091649?e=1762992000&v=beta&t=dYRvLCXGuBma5bj-tJfIFNecLZk6ECTENfpdVTFBYYw"
-          ],
-          "isActivity": false,
-          "shareUrn": "urn:li:share:7383472817062952961",
-          "attributes": [],
-          "comments": [],
-          "reactions": [
-            {
-              "type": "LIKE",
-              "profile": {
-                "firstName": "Harsh",
-                "lastName": "Patel",
-                "occupation": "Driving Smart Manufacturing Through AI, IoT & Custom Software | Enterprise Tech Consultant | Enabling Operational Excellence, Scalable Innovation & Digital Growth",
-                "id": "1041819508",
-                "publicId": "harsh-patel-984aa0250",
-                "trackingId": "h5RpQtarR7qH287Vukfopw==",
-                "profileId": "ACoAAD4Y53QB2aymi4nsTiK5LC2czr-emwNLg2U",
-                "picture": "https://media.licdn.com/dms/image/v2/D4D03AQGXK6IU6ybhLg/profile-displayphoto-shrink_200_200/B4DZdDlLU.H4AY-/0/1749185509238?e=1762992000&v=beta&t=fxIKswL6LlxULnOsjBaGyl9m950oGOk6fF1OUncTPJc",
-                "backgroundImage": "https://media.licdn.com/dms/image/v2/D4D16AQGtuEcHyPBl7g/profile-displaybackgroundimage-shrink_200_800/B4DZcgf5jNGcAU-/0/1748596923454?e=1762992000&v=beta&t=_T_-1PLW9Xbuo5WDeNb4oPTKHbPKVsdBaiDB73D8jaw"
-              }
-            }
-          ],
-          "numShares": 0,
-          "numLikes": 1,
-          "numComments": 0,
-          "canReact": true,
-          "canPostComments": true,
-          "canShare": true,
-          "commentingDisabled": false,
-          "allowedCommentersScope": "ALL",
-          "rootShare": true,
-          "shareAudience": "PUBLIC",
-          "author": {
-            "firstName": "Vishal",
-            "lastName": "Panchal",
-            "occupation": "VP Sales at Ace Infoway | Sales & Operation | P&L | LinkedIn Top Voice | Health Tech Advocate | Expert in Generative AI | Vibe Coding | Fintech | IoT | Supply Chain Logistics | ESG & Sustainability",
-            "id": "37590178",
-            "publicId": "vishal-panchal-sales-leader",
-            "trackingId": "1mIX3/GWSSyCcBTpQnnWow==",
-            "profileId": "ACoAAAI9lKIBR55egyyRsFXhzJFS87EENrgBCXs",
-            "picture": "https://media.licdn.com/dms/image/v2/D5603AQGaTGeN-UVGEw/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1710373005355?e=1762992000&v=beta&t=qRq_0TrvAAPBCe1AVuF70OaXZ1M08SFmQgnII9VYPBg",
-            "backgroundImage": "https://media.licdn.com/dms/image/v2/D4D16AQGEbqdd_nrvqw/profile-displaybackgroundimage-shrink_200_800/profile-displaybackgroundimage-shrink_200_800/0/1732349243128?e=1762992000&v=beta&t=s_NcYzZSPmvIIvYF4u1eyAMscQPPGR8ii_SfbEiBdCs"
-          },
-          "authorProfilePicture": "https://media.licdn.com/dms/image/v2/D5603AQGaTGeN-UVGEw/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1710373005355?e=1762992000&v=beta&t=qRq_0TrvAAPBCe1AVuF70OaXZ1M08SFmQgnII9VYPBg",
-          "authorUrn": "urn:li:member:37590178",
-          "inputUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
-        }
-      },
-      {
-        "json": {
-          "urn": "urn:li:activity:7383471869816958976",
-          "text": "VoIP Trends Transforming Business Communication in 2025\n\nThe VoIP market is experiencing rapid growth, driven by the ongoing shift from traditional telephony to cloud-based communication platforms. As businesses increasingly adopt Unified Communications as a Service, the integration of voice, video, and collaboration tools is becoming essential to support remote and hybrid work environments.\n\nKey VoIP trends reshaping the industry include:  \n- AI-powered features enhancing call routing, transcription, and customer service automation.  \n- 5G integration reducing latency and improving call quality for mobile VoIP users.  \n- Convergence with IoT enabling smart home, industrial, and healthcare applications.  \n- Advances in security protocols combating a 25% yearly rise in VoIP cyberattacks.  \n- WebRTC adoption allowing browser-based real-time communication without dedicated software.\n\nUnderstanding these trends highlights the critical role VoIP plays in modernizing business communication infrastructure. How is your organization leveraging new VoIP technologies to improve collaboration and security? What challenges do you foresee as these technologies continue to evolve? \n\nP.S. Enjoyed this post?  \nLike & Follow for telecom solutions, industry insights, and expert tips to help you #StayConnected  \n#InterstateTelecom #ITI #TelecomTips #VoIP2025",
-          "url": "https://www.linkedin.com/posts/interstatenetworks_stayconnected-interstatetelecom-iti-activity-7383471869816958976-h1Hb?utm_source=combined_share_message&utm_medium=member_desktop&rcm=ACoAABYQlvsBgJe1MBpjiTMoNTMlNnUlroQlwjA",
-          "postedAtTimestamp": 1760356872038,
-          "postedAtISO": "2025-10-13T12:01:12.038Z",
-          "timeSincePosted": "13m",
-          "isRepost": false,
-          "authorType": "Company",
-          "authorProfileUrl": "https://www.linkedin.com/company/interstatenetworks/posts",
-          "authorProfileId": "company",
-          "authorFollowersCount": "174",
-          "authorName": "Interstate Telecommunications, Inc",
-          "type": "text",
-          "isActivity": false,
-          "shareUrn": "urn:li:share:7383471866947985408",
-          "attributes": [],
-          "comments": [],
-          "reactions": [
-            {
-              "type": "LIKE",
-              "profile": {
-                "firstName": "Lindsay",
-                "lastName": "Linhart",
-                "occupation": "I make your favorite talent and brand’s big ideas operational | Brand Strategy, Execution & Growth | dipWSET | Ex-Goldman Sachs | Follow for insights on building boldly and mindfully",
-                "id": "105719873",
-                "publicId": "lindsaymulfordlinhart",
-                "trackingId": "YgdbHtM2QbCjJRJTRabYDw==",
-                "profileId": "ACoAAAZNKEEBTZ0nAE__qd6SmlvWkWyT5QgxpcY",
-                "picture": "https://media.licdn.com/dms/image/v2/D5603AQFFH_GI0pcNEQ/profile-displayphoto-shrink_200_200/B56ZeN4bX7H8AY-/0/1750432069458?e=1762992000&v=beta&t=y3QZAYrMjor7_eRREFwal9-KDPseoHeQN92VbbQI-rM",
-                "backgroundImage": "https://media.licdn.com/dms/image/v2/D5616AQH7sHemVSgnxg/profile-displaybackgroundimage-shrink_200_800/B56ZdkumeFGoAY-/0/1749741627728?e=1762992000&v=beta&t=8s4Ns7v-nsfKkzagaMXOemsbQLaldnWgIr3a76gDD9Q"
-              }
-            }
-          ],
-          "numShares": 0,
-          "numLikes": 1,
-          "numComments": 0,
-          "canReact": true,
-          "canPostComments": true,
-          "canShare": true,
-          "commentingDisabled": false,
-          "allowedCommentersScope": "ALL",
-          "rootShare": true,
-          "shareAudience": "PUBLIC",
-          "author": {
-            "name": "Interstate Telecommunications, Inc",
-            "universalName": "interstatenetworks",
-            "trackingId": "vs23qAKYQc+Knxl5v+CI8g==",
-            "active": true,
-            "showcase": false,
-            "entityUrn": "urn:li:fs_miniCompany:15519665",
-            "logoUrl": "https://media.licdn.com/dms/image/v2/D4E0BAQGNeT2b6_fYZw/company-logo_200_200/company-logo_200_200/0/1704974709579/interstate_telecommunications_inc_logo?e=1762992000&v=beta&t=wVZ1IONjxlFtRmkhUC2UPuAmTcjH964HMDh4O_5N4y4"
-          },
-          "authorProfilePicture": "https://media.licdn.com/dms/image/v2/D4E0BAQGNeT2b6_fYZw/company-logo_200_200/company-logo_200_200/0/1704974709579/interstate_telecommunications_inc_logo?e=1762992000&v=beta&t=wVZ1IONjxlFtRmkhUC2UPuAmTcjH964HMDh4O_5N4y4",
-          "authorUrn": "urn:li:company:15519665",
-          "inputUrl": "https://www.linkedin.com/search/results/content/?keywords=AI%20in%20healthcare%20trends&datePosted=past-24h&sortBy=date_posted&origin=FACETED_SEARCH"
-        }
-      }
     ]
   },
   "connections": {
@@ -1510,17 +474,6 @@
         [
           {
             "node": "Search LinkedIn for Related Posts",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Search LinkedIn for Related Posts": {
-      "main": [
-        [
-          {
-            "node": "Generate LinkedIn Outreach Message Sequence",
             "type": "main",
             "index": 0
           }
@@ -1570,6 +523,17 @@
           }
         ]
       ]
+    },
+    "Search LinkedIn for Related Posts": {
+      "main": [
+        [
+          {
+            "node": "Generate LinkedIn Outreach Message Sequence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -1580,7 +544,7 @@
     "availableInMCP": false,
     "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
   },
-  "versionId": "1e538188-3f1a-4797-95cb-d1a09546dd80",
+  "versionId": "b2f22822-b794-4b4f-a84e-cf405327a436",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"

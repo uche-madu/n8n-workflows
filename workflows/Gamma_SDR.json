@@ -190,7 +190,7 @@
     },
     {
       "parameters": {
-        "url": "https://api.apify.com/v2/acts/supreme_coder~apollo-scraper/run-sync-get-dataset-items?token=apify_api_VXQjlVmqWiSQAJwN84taju9HQ1Mczq1fJgV3",
+        "url": "https://api.apify.com/v2/acts/supreme_coder~apollo-scraper/run-sync-get-dataset-items",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n    \"count\": 25,\n    \"excludeGuessedEmails\": true,\n    \"excludeNoEmails\": true,\n    \"getEmails\": true,\n    \"searchUrl\": \"https://app.apollo.io/#/people?page=1&sortAscending=false&sortByField=recommendations_score&contactEmailStatusV2[]=verified&organizationNumEmployeesRanges[]=21%2C50&organizationNumEmployeesRanges[]=11%2C20&organizationNumEmployeesRanges[]=51%2C100&organizationIndustryTagIds[]=5567cd4773696439b10b0000&organizationIndustryTagIds[]=5567ce1f7369643b78570000&personTitles[]=cto&personTitles[]=remote%20lead&personTitles[]=head%20of%20remote%20operations&personLocations[]=United%20States&personLocations[]=Canada&personLocations[]=United%20Kingdom\"\n}",

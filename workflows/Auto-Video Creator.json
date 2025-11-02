@@ -51,23 +51,6 @@
     },
     {
       "parameters": {
-        "url": "https://api.apify.com/v2/acts/apify~website-content-crawler/run-sync-get-dataset-items?token=apify_api_VXQjlVmqWiSQAJwN84taju9HQ1Mczq1fJgV3",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n    \"aggressivePrune\": false,\n    \"clickElementsCssSelector\": \"[aria-expanded=\\\"false\\\"]\",\n    \"clientSideMinChangePercentage\": 15,\n    \"crawlerType\": \"cheerio\",\n    \"debugLog\": false,\n    \"debugMode\": false,\n    \"expandIframes\": true,\n    \"ignoreCanonicalUrl\": false,\n    \"keepUrlFragments\": false,\n    \"proxyConfiguration\": {\n        \"useApifyProxy\": true\n    },\n    \"readableTextCharThreshold\": 100,\n    \"removeCookieWarnings\": true,\n    \"removeElementsCssSelector\": \"nav, footer, script, style, noscript, svg, img[src^='data:'],\\n[role=\\\"alert\\\"],\\n[role=\\\"banner\\\"],\\n[role=\\\"dialog\\\"],\\n[role=\\\"alertdialog\\\"],\\n[role=\\\"region\\\"][aria-label*=\\\"skip\\\" i],\\n[aria-modal=\\\"true\\\"]\",\n    \"renderingTypeDetectionPercentage\": 10,\n    \"respectRobotsTxtFile\": true,\n    \"saveFiles\": false,\n    \"saveHtml\": false,\n    \"saveHtmlAsFile\": false,\n    \"saveMarkdown\": true,\n    \"saveScreenshots\": false,\n    \"startUrls\": [\n        {\n            \"url\": \"{{ $json.output.url }}\",\n            \"method\": \"GET\"\n        }\n    ],\n    \"useSitemaps\": false\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        48,
-        0
-      ],
-      "id": "a6e23bf8-3682-40d7-95f1-5ca224c46eba",
-      "name": "Apify Web Scraper"
-    },
-    {
-      "parameters": {
         "promptType": "define",
         "text": "=Instruction: {{ $json.instruction }}\n{{ $json.text }}\n",
         "messages": {
@@ -81,7 +64,7 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.6,
       "position": [
-        704,
+        912,
         112
       ],
       "id": "f2d4fc0f-e2cd-49e9-aab7-17a9754fce81",
@@ -92,7 +75,7 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.1,
       "position": [
-        480,
+        688,
         112
       ],
       "id": "eb4a97bb-644e-42f4-b6f9-9d54903e75b8",
@@ -125,7 +108,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        256,
+        464,
         0
       ],
       "id": "584c1da1-4989-4a45-8100-6fcf85bb5535",
@@ -138,7 +121,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        256,
+        464,
         208
       ],
       "id": "4e21a7e3-4032-4f68-9e31-dfca4a860e1b",
@@ -152,7 +135,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
       "position": [
-        784,
+        992,
         320
       ],
       "id": "0a956337-3e6f-4865-ace1-778a9cb7785d",
@@ -193,7 +176,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1072,
+        1280,
         112
       ],
       "id": "1f28f17a-f412-48c6-b9a0-46730bf45e93",
@@ -224,7 +207,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1312,
+        1520,
         112
       ],
       "id": "a96aa38c-65e5-4b2b-9e66-f3b0957bc8a0",
@@ -629,7 +612,7 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
       "position": [
-        1744,
+        1952,
         112
       ],
       "id": "61cccf0e-f44d-4d23-adc6-a51b117766b2",
@@ -658,7 +641,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1520,
+        1728,
         112
       ],
       "id": "df60bc49-f3c1-4a26-beb8-e204114ad153",
@@ -859,6 +842,35 @@
           "name": "Uche's Airtable OAuth Account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorId": {
+          "__rl": true,
+          "value": "aYG0l9s7dbB7j3gbS",
+          "mode": "list",
+          "cachedResultName": "Website Content Crawler (apify/website-content-crawler)",
+          "cachedResultUrl": "https://console.apify.com/actors/aYG0l9s7dbB7j3gbS/input"
+        },
+        "customBody": "{\n    \"aggressivePrune\": false,\n    \"clickElementsCssSelector\": \"[aria-expanded=\\\"false\\\"]\",\n    \"clientSideMinChangePercentage\": 15,\n    \"crawlerType\": \"cheerio\",\n    \"debugLog\": false,\n    \"debugMode\": false,\n    \"expandIframes\": true,\n    \"ignoreCanonicalUrl\": false,\n    \"keepUrlFragments\": false,\n    \"proxyConfiguration\": {\n        \"useApifyProxy\": true\n    },\n    \"readableTextCharThreshold\": 100,\n    \"removeCookieWarnings\": true,\n    \"removeElementsCssSelector\": \"nav, footer, script, style, noscript, svg, img[src^='data:'],\\n[role=\\\"alert\\\"],\\n[role=\\\"banner\\\"],\\n[role=\\\"dialog\\\"],\\n[role=\\\"alertdialog\\\"],\\n[role=\\\"region\\\"][aria-label*=\\\"skip\\\" i],\\n[aria-modal=\\\"true\\\"]\",\n    \"renderingTypeDetectionPercentage\": 10,\n    \"respectRobotsTxtFile\": true,\n    \"saveFiles\": false,\n    \"saveHtml\": false,\n    \"saveHtmlAsFile\": false,\n    \"saveMarkdown\": true,\n    \"saveScreenshots\": false,\n    \"startUrls\": [\n        {\n            \"url\": \"{{ $json.output.url }}\",\n            \"method\": \"GET\"\n        }\n    ],\n    \"useSitemaps\": false\n}",
+        "memory": 512,
+        "authentication": "apifyOAuth2Api"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [
+        192,
+        0
+      ],
+      "id": "8a4792dc-7de1-4208-ab60-87428ae3556b",
+      "name": "Web Scraper",
+      "credentials": {
+        "apifyOAuth2Api": {
+          "id": "Nl1l0FUZdHPSOCPL",
+          "name": "Uche - Dreem Apify"
+        }
+      }
     }
   ],
   "pinData": {
@@ -948,7 +960,7 @@
       "main": [
         [
           {
-            "node": "Apify Web Scraper",
+            "node": "Web Scraper",
             "type": "main",
             "index": 0
           }
@@ -956,17 +968,6 @@
         [
           {
             "node": "Standardize Direct Input",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Apify Web Scraper": {
-      "main": [
-        [
-          {
-            "node": "Standardize Apify Output",
             "type": "main",
             "index": 0
           }
@@ -1181,6 +1182,17 @@
           }
         ]
       ]
+    },
+    "Web Scraper": {
+      "main": [
+        [
+          {
+            "node": "Standardize Apify Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -1190,7 +1202,7 @@
     "availableInMCP": false,
     "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
   },
-  "versionId": "e609c5aa-1098-4a4d-86bc-009c637c2da5",
+  "versionId": "7050ed66-57ef-40ce-b52e-88f3a144ca16",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"

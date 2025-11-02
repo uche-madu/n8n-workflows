@@ -1,5 +1,4 @@
 {
-  "name": "Google Maps Lead Generation",
   "nodes": [
     {
       "parameters": {
@@ -21,23 +20,6 @@
           "name": "Typeform account"
         }
       }
-    },
-    {
-      "parameters": {
-        "url": "https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=apify_api_VXQjlVmqWiSQAJwN84taju9HQ1Mczq1fJgV3",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n    \"includeWebResults\": false,\n    \"language\": \"en\",\n    \"locationQuery\": \"\",\n    \"maxCrawledPlacesPerSearch\": 50,\n    \"maxImages\": 0,\n    \"maximumLeadsEnrichmentRecords\": 0,\n    \"scrapeContacts\": false,\n    \"scrapeDirectories\": false,\n    \"scrapeImageAuthors\": false,\n    \"scrapePlaceDetailPage\": false,\n    \"scrapeReviewsPersonalData\": true,\n    \"scrapeTableReservationProvider\": false,\n    \"searchStringsArray\": [\n        \"{{ $json.Keywords }}\"\n    ],\n    \"skipClosedPlaces\": false\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        224,
-        0
-      ],
-      "id": "dada7cd3-4594-47d5-9d4f-b6a8aa82540d",
-      "name": "Search Google Maps Through Apify"
     },
     {
       "parameters": {
@@ -77,7 +59,7 @@
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.2,
       "position": [
-        448,
+        656,
         0
       ],
       "id": "4993600c-e110-4ed2-b96e-cd079008a9cd",
@@ -90,7 +72,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
+        880,
         0
       ],
       "id": "b286516b-47ea-4754-ab78-40202a28af13",
@@ -422,7 +404,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        896,
+        1104,
         0
       ],
       "id": "a12faea0-7b54-4124-b6e5-290b8e8fca5b",
@@ -519,7 +501,7 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        1104,
+        1312,
         -16
       ],
       "id": "eba54889-fc89-4533-9efb-1519ef8f7117",
@@ -532,7 +514,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1360,
+        1568,
         -160
       ],
       "id": "3f92ca02-a0b8-4042-8b80-8b5f9c167030",
@@ -673,7 +655,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        1696,
+        1904,
         -192
       ],
       "id": "cc9ae67c-6900-4149-829b-f294b0c29ae8",
@@ -693,7 +675,7 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        2096,
+        2304,
         -192
       ],
       "id": "9c1cc2e8-8be9-4b7e-82bb-0b2de66384fc",
@@ -710,7 +692,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2592,
+        2800,
         -208
       ],
       "id": "4ca829d0-a026-4b3e-a67a-89f4d5067ec7",
@@ -729,7 +711,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2416,
+        2624,
         -208
       ],
       "id": "7333d5f9-2415-439c-b4ab-4f931efa75f8",
@@ -743,7 +725,7 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        2848,
+        3056,
         -64
       ],
       "id": "6e8226a8-6932-4e0d-8385-f6d47174f074",
@@ -757,7 +739,7 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        3168,
+        3376,
         -400
       ],
       "id": "2e5ef351-6a20-4e6e-93f5-96e14958939d",
@@ -777,7 +759,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3616,
+        3824,
         -304
       ],
       "id": "a98a107b-83c3-4951-af70-694bc637c6a5",
@@ -796,7 +778,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3392,
+        3600,
         -352
       ],
       "id": "9171d2dd-7c68-4030-9ce5-f84b68ead11a",
@@ -810,7 +792,7 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        3392,
+        3600,
         -544
       ],
       "id": "ccba3051-6e1c-4ea2-a913-68317fe6b4c4",
@@ -999,7 +981,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        2736,
+        2944,
         -400
       ],
       "id": "ae82991b-e0c0-4614-b331-1c21c34c4c9b",
@@ -1030,7 +1012,7 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        2560,
+        2768,
         -400
       ],
       "id": "3350de39-8e1c-43e0-aa85-4b1ba5cca503",
@@ -1057,7 +1039,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        2352,
+        2560,
         -512
       ],
       "id": "99a0c6af-53f1-4e09-9d99-b112a2913295",
@@ -1246,7 +1228,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        3616,
+        3824,
         -544
       ],
       "id": "9f2741ab-1f2d-4910-9c8c-6563d356e5c5",
@@ -1265,39 +1247,47 @@
       "type": "n8n-nodes-base.limit",
       "typeVersion": 1,
       "position": [
-        2960,
+        3168,
         -400
       ],
       "id": "a9d8c503-7166-4a87-bc51-d64f48b693c4",
       "name": "Limit"
-    }
-  ],
-  "pinData": {
-    "Typeform Trigger": [
-      {
-        "json": {
-          "Keywords": "hotels in ikeja lagos"
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorId": {
+          "__rl": true,
+          "value": "nwua9Gu5YrADL7ZDj",
+          "mode": "list",
+          "cachedResultName": "Google Maps Scraper (compass/crawler-google-places)",
+          "cachedResultUrl": "https://console.apify.com/actors/nwua9Gu5YrADL7ZDj/input"
+        },
+        "customBody": "{\n    \"includeWebResults\": false,\n    \"language\": \"en\",\n    \"locationQuery\": \"\",\n    \"maxCrawledPlacesPerSearch\": 50,\n    \"maxImages\": 0,\n    \"maximumLeadsEnrichmentRecords\": 0,\n    \"scrapeContacts\": false,\n    \"scrapeDirectories\": false,\n    \"scrapeImageAuthors\": false,\n    \"scrapePlaceDetailPage\": false,\n    \"scrapeReviewsPersonalData\": true,\n    \"scrapeTableReservationProvider\": false,\n    \"searchStringsArray\": [\n        \"{{ $json.Keywords }}\"\n    ],\n    \"skipClosedPlaces\": false\n}",
+        "authentication": "apifyOAuth2Api"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b2f5ae66-a001-4bbc-89fd-84f757c8e7a1",
+      "name": "Search Google Maps Through Apify",
+      "credentials": {
+        "apifyOAuth2Api": {
+          "id": "Nl1l0FUZdHPSOCPL",
+          "name": "Uche - Dreem Apify"
         }
       }
-    ]
-  },
+    }
+  ],
   "connections": {
     "Typeform Trigger": {
       "main": [
         [
           {
             "node": "Search Google Maps Through Apify",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Search Google Maps Through Apify": {
-      "main": [
-        [
-          {
-            "node": "Remove Closed Businesses",
             "type": "main",
             "index": 0
           }
@@ -1527,17 +1517,28 @@
           }
         ]
       ]
+    },
+    "Search Google Maps Through Apify": {
+      "main": [
+        [
+          {
+            "node": "Remove Closed Businesses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1"
+  "pinData": {
+    "Typeform Trigger": [
+      {
+        "Keywords": "hotels in ikeja lagos"
+      }
+    ]
   },
-  "versionId": "ea39215b-3060-4150-b011-eef182389616",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
-  },
-  "id": "1CQ6fmEHIxF3j6Hw",
-  "tags": []
+  }
 }
