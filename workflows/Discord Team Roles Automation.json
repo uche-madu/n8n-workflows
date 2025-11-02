@@ -1,0 +1,1930 @@
+{
+  "name": "Discord Team Roles Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        2064,
+        640
+      ],
+      "id": "5d3278c1-eda1-432e-8d09-d1f527af5a1b",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Teams 1–100\n// const teams = Array.from({ length: 100 }, (_, i) => `team ${i + 1}`);\n\n// Teams 101–150\n// const teams = Array.from({ length: 50 }, (_, i) => `team ${i + 101}`);\n\n// Teams 151–200\n// const teams = Array.from({ length: 50 }, (_, i) => `team ${i + 151}`);\n\n// Teams 201–300\nconst teams = Array.from({ length: 100 }, (_, i) => `team ${i + 201}`);\n\n// Emit one request config per team\nreturn teams.map(name => ({\n  json: {\n    url: `https://discord.com/api/v10/guilds/1392546196563820584/roles`,\n    method: \"POST\",\n    body: {\n      name\n    }\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2272,
+        640
+      ],
+      "id": "418b99d1-f968-4ad0-9730-b87029c01468",
+      "name": "Construct Create Role Payload"
+    },
+    {
+      "parameters": {
+        "url": "=https://discord.com/api/v10/guilds/1392546196563820584/roles",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "discordBotApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2128,
+        992
+      ],
+      "id": "a5cf83b7-5015-4fb0-ae05-68831e16aee7",
+      "name": "Get All Roles",
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "TaSegMQiqKht0Dif",
+          "name": "Uche Discord account"
+        },
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lowercase deity names\nconst deities = new Set([\n  \"zeus\",\"hera\",\"poseidon\",\"hades\",\"demeter\",\"athena\",\"apollo\",\"artemis\",\"ares\",\n  \"hephaestus\",\"hermes\",\"dionysus\",\"persephone\",\"hestia\",\"aphrodite\",\"kronos\",\n  \"rhea\",\"gaia\",\"uranus\",\"nyx\",\"eros\",\"nike\",\"helios\",\"selene\",\"morpheus\",\n  \"odin\",\"thor\",\"loki\",\"freyja\",\"balder\",\"tyr\",\"heimdall\",\"frigg\",\n  \"olodumare\",\"obatala\",\"orunmila\",\"esu\",\"ogun\",\"sango\",\"yemoja\",\"oya\",\"oshun\",\"oba\",\n  \"erinle\",\"osanyin\",\"eshu\",\"egungun\",\"aje\",\"ibeji\",\n  \"chukwu\",\"ala\",\"amadioha\",\"anyanwu\",\"ekwensu\",\"idemili\",\n  \"osanobua\",\"olokun\",\"ogiuwu\",\n  \"nyame\",\"asase yaa\",\"anansi\",\"mawu\",\"lisa\",\"legba\",\n  \"amma\",\"nommo\",\"unkulunkulu\",\"nzambi mpungu\",\n  \"ra\",\"osiris\",\"isis\",\"horus\",\"set\",\"anubis\",\"thoth\",\"bastet\",\"sekhmet\",\"hathor\",\"ptah\"\n]);\n\n// roles JSON should come from a previous HTTP Request node:\n// GET https://discord.com/api/v10/guilds/1392546196563820584/roles\nconst roles = $input.all();\n\n// Build delete requests only for matching deity names\nconst results = roles\n  .filter(r => typeof r.json.name === \"string\" && deities.has(r.json.name.toLowerCase()))\n  .map(r => ({\n    json: {\n      url: `https://discord.com/api/v10/guilds/1392546196563820584/roles/${r.json.id}`,\n      method: \"DELETE\",\n      headers: {\n        Authorization: \"Bot {{your_bot_token}}\"\n      }\n    }\n  }));\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2352,
+        992
+      ],
+      "id": "852d1095-7bb4-47c3-a948-394b6f5f7e47",
+      "name": "Construct Delete Role Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "discordBotApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.body.name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2720,
+        560
+      ],
+      "id": "91323343-8b10-4c1b-85c3-4c544ec83c83",
+      "name": "Create Roles",
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "TaSegMQiqKht0Dif",
+          "name": "Uche Discord account"
+        },
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "discordBotApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2800,
+        928
+      ],
+      "id": "5e498f7f-7dae-4d3d-ae54-ae0e3c9b4be5",
+      "name": "Delete Roles",
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "TaSegMQiqKht0Dif",
+          "name": "Uche Discord account"
+        },
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2576,
+        992
+      ],
+      "id": "231baa74-c4d8-450d-bd92-4d4e1206b73b",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3024,
+        992
+      ],
+      "id": "fd8080cf-660a-4207-8895-061b97fe83f4",
+      "name": "Wait",
+      "webhookId": "e48f5be5-165e-46fb-ae36-813b8c48509e"
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2496,
+        640
+      ],
+      "id": "21f5079b-a350-46e1-ac80-e7b5b08ac12e",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "content": "## Delete Discord Roles\n1. Get all roles\n2. Select specific roles to delete and create delete endpoint for each with their IDs\n3. Use loop over items (5 per batch) and wait for 10 seconds to avoid rate limits",
+        "height": 368,
+        "width": 1440
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1856,
+        864
+      ],
+      "typeVersion": 1,
+      "id": "bc164cb3-9dab-412b-be69-55c6ab959aae",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## 🛠️ Create Discord Roles\n\n1️⃣ **Construct role names** for teams (supports **Teams 1–100**, **101–150**, and **151–200**).  \n2️⃣ **Toggle the active `const teams` block** in the Code node to select which batch to create.  \n3️⃣ **Send requests** to the Discord Roles endpoint to create each role.  \n4️⃣ **Process in batches of 5** and ⏳ **wait 10 seconds** between cycles to avoid rate limits. \n \n⚠️ **Idempotency Warning**: Running this workflow multiple times will create **duplicate Discord roles with the same names**. Make sure you only execute once per batch, or clean up duplicates afterward.  \n",
+        "height": 496,
+        "width": 1360,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1856,
+        368
+      ],
+      "typeVersion": 1,
+      "id": "a50aec1d-9ca7-4307-b622-c601402da43a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://discord.com/api/v10/guilds/' + $('Loop Over Items2').first().json.guildId + '/members?limit=1000&after=' + $('Loop Over Items2').first().json.after }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "discordBotApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        272
+      ],
+      "id": "c804fe16-8aac-41fd-a966-b12d63f8d7c9",
+      "name": "Get All Members",
+      "executeOnce": true,
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "TaSegMQiqKht0Dif",
+          "name": "Uche Discord account"
+        },
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "guildId",
+              "value": "1392546196563820584"
+            },
+            {
+              "name": "after",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aca659ec-d92b-4209-80a7-b20ac9d3ff02",
+      "name": "Set Vars",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -1232,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": true
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1024,
+        448
+      ],
+      "id": "7822728a-2890-4a8a-aedc-998f311e4981",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {
+        "content": "## 📝 Discord Role Assignment\n\n**Goal:**\nKeep Discord members and roles synced into Postgres, build a pool of eligible members, and assign them into team roles until capacity is reached.\n\n---\n\n#### 🔄 Triggers\n\n* **Run At Every Hour** → Starts the workflow automatically.\n\n---\n\n#### 👥 Members\n\n1. **Set Vars** → Initialize guild ID and pagination cursor (`after = 0`).\n2. **Loop Over Items2** + **Get All Members** → Paginate through Discord API to fetch all guild members in batches of 1000.\n3. **Set Pagination Cursor** → Calculate `after` cursor for next page until all members are fetched.\n4. **Upsert Members** → Store/update member data (`id, username, global_name, roles, joined_at`) in the `members` table.\n\n---\n\n#### 🏷 Roles\n\n5. **Get All Roles1** → Fetch all guild roles from Discord API.\n6. **Upsert Roles** → Store/update role data in the `roles_status` table (with `role_id`, `role_name`, `is_filled`).\n\n---\n\n#### 🧑‍🤝‍🧑 Eligible Member Pool\n\n7. **Create Eligible Member Pool** →\n\n   * Clears the `eligible_pool` table.\n   * Inserts members who don’t already have pending/completed team assignments and who don’t hold system/admin roles.\n   * Returns count of eligible members.\n\n---\n\n#### 🎯 Role Assignment Loop\n\n8. **Select Eligible Roles** → Get roles that are not yet filled and still below capacity.\n9. **Loop Over Items3** → Iterate over each eligible role.\n10. **Insert Assignments** → Randomly assign eligible members into the role (up to remaining slots). Insert into `role_assignments` as `pending`.\n11. **Clean Eligible Member Pool** → Remove assigned members from the `eligible_pool`.\n12. **Update Role\\_Status Table** → Update `member_count`, mark role as filled if capacity reached, and set `filled_at`.\n13. Loop continues until all eligible roles are processed.\n\n---\n\n#### ✅ Outputs\n\n* `members` → Always up-to-date list of Discord members.\n* `roles_status` → Tracks each role’s capacity, members assigned, and fill status.\n* `role_assignments` → Records assignments (`pending` → later updated to `completed`).\n* `eligible_pool` → Working table for unassigned eligible members.\n\n---\n\n⚠️ **Notes:**\n\n* `eligible_pool` is reset every run.\n* System/admin roles (`@everyone, Admin, Moderator, Mentor, MEE6, Member, Divverse Bot, uche-bot`) are excluded.\n* The loop ensures each member is only assigned once and roles stop filling once capacity is reached.\n\n",
+        "height": 1664,
+        "width": 1584,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3168,
+        -384
+      ],
+      "typeVersion": 1,
+      "id": "d62e26e4-c1d3-4935-b533-d3e331ec1f68",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "url": "=https://discord.com/api/v10/guilds/1392546196563820584/roles",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "discordBotApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -864,
+        272
+      ],
+      "id": "10f24a3f-a346-41da-82a6-ac8ce99676aa",
+      "name": "Get All Roles1",
+      "executeOnce": true,
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "TaSegMQiqKht0Dif",
+          "name": "Uche Discord account"
+        },
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "members",
+          "mode": "list",
+          "cachedResultName": "members"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.user.id }}",
+            "username": "={{ $json.user.username }}",
+            "global_name": "={{ $json.user.global_name }}",
+            "roles": "={{ $json.roles }}",
+            "joined_at": "={{ $json.joined_at }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "username",
+              "displayName": "username",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "global_name",
+              "displayName": "global_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "joined_at",
+              "displayName": "joined_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "roles",
+              "displayName": "roles",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "array",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -240,
+        48
+      ],
+      "id": "1c39ae8c-7e42-422c-9109-f1be40abdbaf",
+      "name": "Upsert Members",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "roles_status",
+          "mode": "list",
+          "cachedResultName": "roles_status"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "is_filled": false,
+            "role_id": "={{ $json.id }}",
+            "role_name": "={{ $json.name }}"
+          },
+          "matchingColumns": [
+            "role_id"
+          ],
+          "schema": [
+            {
+              "id": "role_id",
+              "displayName": "role_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "role_name",
+              "displayName": "role_name",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "is_filled",
+              "displayName": "is_filled",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "filled_at",
+              "displayName": "filled_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -736,
+        -96
+      ],
+      "id": "890b5b91-b20b-4ad0-a827-6303a28bb83d",
+      "name": "Upsert Roles",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    rs.role_id,\n    rs.role_name\nFROM roles_status rs\nLEFT JOIN (\n    -- Count how many assignments exist for each role\n    SELECT role_id, COUNT(*) AS assigned_count\n    FROM role_assignments\n    WHERE status IN ('pending', 'completed')\n    GROUP BY role_id\n) ra ON rs.role_id = ra.role_id\nWHERE rs.role_name LIKE 'team%'                  -- ✅ only team roles\n  AND rs.role_name NOT IN (                      -- exclude generic roles if they happen to match\n    '@everyone','Admin','Moderator','Mentor',\n    'MEE6','Member','Divverse Bot','uche-bot'\n  )\n  AND COALESCE(ra.assigned_count, 0) < rs.capacity -- role still has capacity\n  AND rs.is_filled = FALSE;                        -- role not marked as filled\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        256,
+        48
+      ],
+      "id": "20e226c8-9a5a-4dcf-898e-8b2481b7fb62",
+      "name": "Select Eligible Roles",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        496,
+        48
+      ],
+      "id": "56f134eb-b93d-451a-a9a1-c80736fbf6b8",
+      "name": "Loop Over Items3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- How many roles are actually assignable?\nSELECT COUNT(*) AS eligible_roles\nFROM roles_status \nWHERE role_name NOT IN ('@everyone','Admin','Moderator','Mentor','MEE6','Divverse Bot','uche-bot');\n\n-- How many members are currently marked unassigned?\nSELECT COUNT(*) AS unassigned_members\nFROM members m\nWHERE NOT EXISTS (\n  SELECT 1 \n  FROM unnest(roles) r\n  WHERE r::text NOT IN ('@everyone','Member')\n);\n\n-- How many members have excluded roles?\nWITH excluded AS (\n  SELECT m.id, unnest(m.roles) AS role_id\n  FROM members m\n)\nSELECT COUNT(DISTINCT e.id) AS members_with_excluded_roles\nFROM excluded e\nJOIN roles_status rs ON rs.role_id::text = e.role_id::text\nWHERE rs.role_name IN (\n  '@everyone','Admin', 'Member','Moderator','Mentor',\n  'MEE6','Divverse Bot','uche-bot'\n  -- add deity roles here if needed\n);\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        704,
+        1088
+      ],
+      "id": "6f736389-0482-460b-960d-dbb7ad0b9bfc",
+      "name": "Verify Role Assignments",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://discord.com/api/v10/guilds/' + $('Loop Over Items4').first().json.guildId + '/members?limit=1000&after=' + $('Loop Over Items4').first().json.after }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "discordBotApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2672,
+        1328
+      ],
+      "id": "5036f21a-0bd2-4f64-846f-bd73374d267b",
+      "name": "Get All Members1",
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "TaSegMQiqKht0Dif",
+          "name": "Uche Discord account"
+        },
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "guildId",
+              "value": "1392546196563820584"
+            },
+            {
+              "name": "after",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f080c81d-0c3f-4366-8553-985f061cbfc6",
+      "name": "Set Vars1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        2144,
+        1472
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": true
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2352,
+        1472
+      ],
+      "id": "7605e921-e0bb-479a-827e-370f1a7926c5",
+      "name": "Loop Over Items4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const SKIP_ROLE_IDS = new Set([\n  \"1395398390996537414\", // Admin\n  \"1395398895525298238\", // Moderator\n  \"1395399266385793236\", // Mentor\n  \"1395399567448604885\", // Member\n  \"1411812885973176384\", // MEE6 (bot role)\n  \"1411835629515313185\", // Divverse Bot\n  \"1412131481618354339\", // uche-bot\n]);\n\nconst members = $input.all().map((item) => item.json);\n\nconst filteredMembers = members.filter((member) => {\n  const memberRoles = new Set(member.roles);\n  const intersection = [...SKIP_ROLE_IDS].filter((roleId) =>\n    memberRoles.has(roleId),\n  );\n  return intersection.length === 0;\n});\n\nreturn filteredMembers;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2960,
+        1296
+      ],
+      "id": "9c53d1cd-52ac-48c9-b0a1-9df8afaf7827",
+      "name": "Exclude Users with Higher Roles"
+    },
+    {
+      "parameters": {
+        "content": "## Assign `Member` Role to users\n* In this specific case, we're assigning the Member role to all users that don't have the role, also excluding users with Admin, Mentor, and a few more roles",
+        "height": 752,
+        "width": 2416,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1856,
+        1248
+      ],
+      "typeVersion": 1,
+      "id": "5fa56c3d-b2e1-4fbc-a8f6-c438ceaa2a20",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "Set API cursor to enable pagination\nThe `after` parameter enables this",
+        "height": 304,
+        "width": 304,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3840,
+        1616
+      ],
+      "typeVersion": 1,
+      "id": "84e5bfc1-59e5-42a2-8a81-7c68d11ed322",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node that receives the member items from the HTTP node (one item per member)\nconst members = $input.all(); // array of items for this page\n\n// If no members returned, stop the loop\nif (!members || members.length === 0) {\n  return [];\n}\n\n// If fewer than 1000 members this page => last page -> stop loop\nif (members.length < 1000) {\n  return [];\n}\n\n// Otherwise continue: return a single item with the next cursor\nconst lastUserId = members[members.length - 1].json.user.id;\n\nreturn [\n  {\n    json: {\n      guildId: \"1392546196563820584\", // keep static or derive from Set Vars if you carry it forward\n      after: lastUserId\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3936,
+        1728
+      ],
+      "id": "d944f61c-1fb0-401d-936e-5ca466606f00",
+      "name": "Set Cursor"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3552,
+        1568
+      ],
+      "id": "15e872f7-5a8e-42ba-ad99-5a02b916f2f6",
+      "name": "Wait to Avoid Rate Limits",
+      "webhookId": "e48f5be5-165e-46fb-ae36-813b8c48509e"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://discord.com/api/v10/guilds/1392546196563820584/members/{{ $json.user.id }}/roles/1395399567448604885",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "discordBotApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3376,
+        1408
+      ],
+      "id": "d8276170-08d6-4d80-a998-d1ba1d75db3d",
+      "name": "Assign Role",
+      "retryOnFail": true,
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "TaSegMQiqKht0Dif",
+          "name": "Uche Discord account"
+        },
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        3168,
+        1296
+      ],
+      "id": "a9e1e29a-5f3d-4ff1-8739-07a6c6a12ebe",
+      "name": "Loop Over Items: Batches of 5"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node that receives the member items from the HTTP node (one item per member)\nconst members = $input.all(); // array of items for this page\n\n// If no members returned, stop the loop\nif (!members || members.length === 0) {\n  return [];\n}\n\n// If fewer than 1000 members this page => last page -> stop loop\nif (members.length < 1000) {\n  return [];\n}\n\n// Otherwise continue: return a single item with the next cursor\nconst lastUserId = members[members.length - 1].json.user.id;\n\nreturn [\n  {\n    json: {\n      guildId: \"1392546196563820584\", // keep static or derive from Set Vars if you carry it forward\n      after: lastUserId\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        400
+      ],
+      "id": "355d9b42-9b25-4b2b-87f3-f0e862f3f80a",
+      "name": "Set Pagination Cursor (`after` parameter)"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2944,
+        640
+      ],
+      "id": "ea60d835-9c5c-4533-8d6f-551b4077e1e0",
+      "name": "Wait 10 Seconds (Avoid Rate Limit)",
+      "webhookId": "e48f5be5-165e-46fb-ae36-813b8c48509e"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Clear and repopulate the pool\nTRUNCATE TABLE eligible_pool;\n\nINSERT INTO eligible_pool (member_id, username)\nSELECT m.id AS member_id, m.username\nFROM members m\nWHERE NOT EXISTS (\n    -- Exclude members who already have ANY assignment (pending or completed)\n    SELECT 1\n    FROM role_assignments ra\n    JOIN roles_status rs ON ra.role_id = rs.role_id\n    WHERE ra.member_id = m.id\n      AND ra.status IN ('pending', 'completed')\n      AND rs.role_name NOT IN ('@everyone','Admin','Moderator','Mentor','MEE6','Divverse Bot','uche-bot','Member')\n)\nAND (\n    -- Include members with no roles, only Member role, or basic roles\n    m.roles IS NULL\n    OR array_length(m.roles, 1) = 0\n    OR NOT EXISTS (\n        SELECT 1\n        FROM unnest(m.roles) AS role_elem\n        JOIN roles_status rs ON rs.role_id = role_elem\n        WHERE rs.role_name NOT IN ('@everyone','Admin','Moderator','Mentor','MEE6','Divverse Bot','uche-bot','Member')\n    )\n);\n\n-- Return count for debugging\nSELECT COUNT(*) as eligible_members_count FROM eligible_pool;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        16,
+        48
+      ],
+      "id": "c300cc40-76bb-4078-a7d5-1699fa5285a9",
+      "name": "Create Eligible Member Pool",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH role_slots AS (\n    SELECT rs.role_id, rs.role_name,\n           GREATEST(rs.capacity - COALESCE(ra.assigned_count, 0), 0) AS slots_available\n    FROM roles_status rs\n    LEFT JOIN (\n        SELECT role_id, COUNT(*) AS assigned_count\n        FROM role_assignments\n        WHERE status IN ('pending', 'completed')\n        GROUP BY role_id\n    ) ra ON rs.role_id = ra.role_id\n    WHERE rs.role_id = '{{ $('Select Eligible Roles').item.json.role_id }}'\n      AND rs.is_filled = FALSE\n),\nmembers_to_assign AS (\n    SELECT ep.member_id, ep.username, rs.role_id, rs.role_name,\n           ROW_NUMBER() OVER (ORDER BY random()) as rn\n    FROM eligible_pool ep\n    CROSS JOIN role_slots rs\n    WHERE rs.slots_available > 0\n)\nINSERT INTO role_assignments (member_id, role_id, role_name, username, status, created_at)\nSELECT member_id, role_id, role_name, username, 'pending', NOW()\nFROM members_to_assign\nWHERE rn <= (SELECT slots_available FROM role_slots)\nON CONFLICT (member_id, role_id) DO NOTHING\nRETURNING member_id, role_id, role_name, username;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        736,
+        128
+      ],
+      "id": "86d19b11-8e00-406f-a9f0-066f109928dc",
+      "name": "Insert Assignments",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT ra.id, ra.member_id, ra.role_id\nFROM role_assignments ra\nJOIN roles_status rs ON ra.role_id = rs.role_id\nWHERE ra.status = 'pending';\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -976,
+        1152
+      ],
+      "id": "c9b08136-67c4-4714-9c2b-2b8b70993e08",
+      "name": "Get Role Assignments",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -368,
+        1424
+      ],
+      "id": "814f38b1-1905-4db5-9332-e7b7a2bd132d",
+      "name": "Wait to Avoid Rate Limits1",
+      "webhookId": "e48f5be5-165e-46fb-ae36-813b8c48509e"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE role_assignments\nSET status = 'completed',\n    completed_at = NOW()\nWHERE id = {{ $('Get Role Assignments').item.json.id }};\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -176,
+        1472
+      ],
+      "id": "2b87389c-9d5a-4e88-8c7d-c6dfe21140ff",
+      "name": "Update Role Assignment Status",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE role_assignments\nSET status = 'completed',\n    completed_at = NOW()\nWHERE status = 'pending';\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        464,
+        1312
+      ],
+      "id": "26fc06d5-7984-4902-8d53-12fc572cc24c",
+      "name": "Update Assignment Status",
+      "executeOnce": false,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH deleted AS (\n  DELETE FROM role_assignments\n  WHERE status = 'pending'\n  RETURNING *\n)\nSELECT COUNT(*) AS rows_deleted FROM deleted;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        720,
+        1312
+      ],
+      "id": "ce57f474-5e34-4b91-9da4-4b4eae48ce0e",
+      "name": "Delete Assignment Rows by Status",
+      "executeOnce": false,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## Assign Team Roles to Discord Users \n* Retrieves all `pending` role-user pairings from the `role_assignments` table\n* Calls the Discord API endpoint in batches of 5 to Add the assigned team role per user\n* Waits for 10 seconds between API calls to avoid rate limits\n* Updates role assignment status from `pending` to `completed`\n* Run at 5th minute of every hour after the `role_assignments` table must have been updated via the `Discord Role Assignments` Workflow",
+        "height": 784,
+        "width": 1504,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1456,
+        960
+      ],
+      "typeVersion": 1,
+      "id": "e6c6344b-b178-4365-831b-dbf9179ba2df",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://discord.com/api/v10/guilds/1392546196563820584/members/{{ $json.member_id }}/roles/{{ $json.role_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "discordBotApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -544,
+        1264
+      ],
+      "id": "9427bb1f-74e9-46e8-9958-99fdb3868dd9",
+      "name": "Assign Team Role",
+      "retryOnFail": true,
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "TaSegMQiqKht0Dif",
+          "name": "Uche Discord account"
+        },
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -752,
+        1152
+      ],
+      "id": "13901c46-2d78-4f5c-9ea9-a7fd27722aaa",
+      "name": "Loop Over Items: 5 per Batch"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH assignment_count AS (\n    SELECT COUNT(*) as new_count\n    FROM role_assignments\n    WHERE role_id = '{{ $('Select Eligible Roles').item.json.role_id }}'\n      AND created_at >= NOW() - INTERVAL '1 minute'\n),\ntotal_assignments AS (\n    SELECT COUNT(*) as total_count\n    FROM role_assignments\n    WHERE role_id = '{{ $('Select Eligible Roles').item.json.role_id }}'\n      AND status IN ('pending', 'completed')\n)\nUPDATE roles_status\nSET member_count = ta.total_count,\n    is_filled = ta.total_count >= capacity,\n    filled_at = CASE\n        WHEN ta.total_count >= capacity THEN NOW()\n        ELSE filled_at\n    END\nFROM assignment_count ac, total_assignments ta\nWHERE role_id = '{{ $('Select Eligible Roles').item.json.role_id }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1184,
+        208
+      ],
+      "id": "060a91a0-5209-411d-b838-c1efb366a2a1",
+      "name": "Update Role_Status Table",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1456,
+        448
+      ],
+      "id": "c0fe4833-6765-4147-9029-b2170e95be1c",
+      "name": "Run At Every Hour"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "triggerAtMinute": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1376,
+        1152
+      ],
+      "id": "5114789c-ab55-4edc-a6e5-969f76d77379",
+      "name": "Run at 5th Minute of Every Hour"
+    },
+    {
+      "parameters": {
+        "content": "### 🛠 Debugging & Maintenance\n* Use these queries to debug the `Discord Role Assignment` workflow",
+        "height": 512,
+        "width": 704,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        368,
+        976
+      ],
+      "id": "dc96095c-5882-401d-9a77-7974b4864864",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- 1️⃣ Count unique members in role_assignments\n-- Returns the total number of distinct members who have any assignment\nSELECT COUNT(DISTINCT member_id) AS unique_member_count\nFROM role_assignments;\n\n-- 2️⃣ Find duplicate member assignments\n-- Returns members who are assigned more than once to any role\nSELECT member_id, COUNT(*) AS assignment_count\nFROM role_assignments\nGROUP BY member_id\nHAVING COUNT(*) > 1;\n\n-- 3️⃣ Check roles exceeding their capacity of 15\n-- Returns roles that have been assigned to more than 15 members\nSELECT role_id, role_name, COUNT(*) AS assigned_count\nFROM role_assignments\nGROUP BY role_id, role_name\nHAVING COUNT(*) > 15;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        464,
+        1088
+      ],
+      "id": "13b1bf15-8f20-4422-8dde-84ad85d34753",
+      "name": "Sanity Check for Duplicate Role Assignments",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Discord Role Assignment\n",
+        "height": 768,
+        "width": 2896,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1520,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "e9f7a83e-cba5-4adf-ac73-a07820061a88",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "## Create Discord Team Channels\n1. **Generate 300 team names** split into **6 batches (50 each)**.\n2. Each run: choose which batch to return in the **Code node**.\n3. Use the **Discord Create Channel node** to place channels under the correct **Category** (Alpha | Beta | Gamma | Delta | Epsilon | Zeta).\n4. Run workflow **6 times** to cover all batches/categories.\n\n⚡ Tip: Update the `return batchX;` in the Code node + set the right Category in the Discord node before each run.",
+        "height": 432,
+        "width": 1312,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1856,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "bf631a7e-08f7-4a38-ab14-4e2e7e1c6185",
+      "name": "📌 Instructions"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "guildId": {
+          "__rl": true,
+          "value": "1392546196563820584",
+          "mode": "id"
+        },
+        "name": "={{ $json.name }}",
+        "options": {
+          "categoryId": {
+            "__rl": true,
+            "value": "1414623006835343472",
+            "mode": "list",
+            "cachedResultName": "Zeta",
+            "cachedResultUrl": "https://discord.com/channels/1392546196563820584/1414623006835343472"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        2496,
+        176
+      ],
+      "id": "0438d64e-4448-49e9-a57c-b547e0133caf",
+      "name": "Create Team Channels",
+      "webhookId": "037a420c-b9b3-466d-a66a-59c7f790cb58",
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "6urSWAcNJPqdXDvt",
+          "name": "Discord account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create 300 team names\nconst teams = Array.from({ length: 300 }, (_, i) => `Team ${i + 1}`);\n\n// Batch 1: Team 1-50\nconst batch1 = teams.slice(0, 50).map(name => ({ json: { name } }));\n\n// Batch 2: Team 51-100\nconst batch2 = teams.slice(50, 100).map(name => ({ json: { name } }));\n\n// Batch 3: Team 101-150\nconst batch3 = teams.slice(100, 150).map(name => ({ json: { name } }));\n\n// Batch 4: Team 151-200\nconst batch4 = teams.slice(150, 200).map(name => ({ json: { name } }));\n\n// Batch 5: Team 201-250\nconst batch5 = teams.slice(200, 250).map(name => ({ json: { name } }));\n\n// Batch 6: Team 251-300\nconst batch6 = teams.slice(250, 300).map(name => ({ json: { name } }));\n\n// Return whichever batch you want\nreturn batch6; // <-- switch to batch1, batch2, batch3, or batch4\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2256,
+        176
+      ],
+      "id": "8a6a7f2c-2184-4b8b-8df5-4137be983d2b",
+      "name": "Generate Team Names (Batches)"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "guildId": {
+          "__rl": true,
+          "value": "1392546196563820584",
+          "mode": "list",
+          "cachedResultName": "Divverse AI Automation Course",
+          "cachedResultUrl": "https://discord.com/channels/1392546196563820584"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        -656
+      ],
+      "id": "2be573db-89ed-4d4e-9dbf-569c5244ac8b",
+      "name": "Get many channels",
+      "webhookId": "cc90305f-e4e2-40d9-9ca8-b23fed47ebc3",
+      "credentials": {
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://discord.com/api/v10/guilds/1392546196563820584/roles",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "discordBotApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        -480
+      ],
+      "id": "274c4bf3-98de-452f-83fc-d4611bf933b7",
+      "name": "Get All Roles2",
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "TaSegMQiqKht0Dif",
+          "name": "Uche Discord account"
+        },
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input 0: channels\nconst channels = $input.all(0)\n  .map(item => item.json)\n  .filter(ch => ch.name && ch.name.startsWith(\"team-\"));\n\n// Input 1: roles\nconst roles = $input.all(1)\n  .map(item => item.json)\n  .filter(role => role.name && role.name.startsWith(\"team-\"));\n\n// Build a map of role name -> role id for fast lookup\nconst roleMap = {};\nfor (const role of roles) {\n  roleMap[role.name.toLowerCase()] = role.id;\n}\n\n// Guild id (replace with your own)\nconst guildId = \"1392546196563820584\";\n\n// Now construct payloads\nconst payloads = [];\n\nfor (const ch of channels) {\n  const roleId = roleMap[ch.name.toLowerCase()];\n  if (!roleId) continue; // skip if no matching role found\n\n  // Example: allow view_channel + send_messages\n  payloads.push({\n    json: {\n      url: `https://discord.com/api/v10/channels/${ch.id}/permissions/${roleId}`,\n      method: \"PUT\",\n      body: {\n        type: 0, // 0 = role\n        allow: (1 << 10) | (1 << 11), // VIEW_CHANNEL (1024) + SEND_MESSAGES (2048) = 3072\n        deny: \"0\"\n      }\n    }\n  });\n}\n\nreturn payloads;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        -576
+      ],
+      "id": "448e243c-d36f-40dd-9ece-a39a0d3713ed",
+      "name": "Construct Role → Channel Permission Payloads"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "discordBotApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2256,
+        -576
+      ],
+      "id": "80878455-7b7b-4725-906b-42b1e79b28c1",
+      "name": "HTTP Request",
+      "credentials": {
+        "discordBotApi": {
+          "id": "46HOM6pUdxrU6GSF",
+          "name": "Uche Automation Course Discord Bot Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        2048,
+        -576
+      ],
+      "id": "8b8a1b88-bb8f-4820-bdef-7e7ca292ed7c",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1984,
+        1472
+      ],
+      "id": "4cff3652-1fd6-435d-b2e7-46c50ecbf9c8",
+      "name": "Run Every Hour"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM eligible_pool\nWHERE member_id IN (\n    SELECT member_id \n    FROM role_assignments \n    WHERE role_id = '{{ $('Select Eligible Roles').item.json.role_id }}' \n      AND created_at >= NOW() - INTERVAL '1 minute'\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        944,
+        128
+      ],
+      "id": "d494e9e0-104f-44b6-ab27-d5f6610d98e7",
+      "name": "Update Eligible Member Pool (Remove Assigned Members)",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Members that are neither excluded nor in any team,\n-- with their role_name and status\nWITH member_roles AS (\n  -- Expand the array of roles for each member\n  SELECT m.id AS member_id, unnest(m.roles) AS role_id\n  FROM members m\n),\nexcluded_members AS (\n  -- Members with at least one excluded role\n  SELECT DISTINCT mr.member_id\n  FROM member_roles mr\n  JOIN roles_status rs\n    ON rs.role_id::text = mr.role_id::text\n  WHERE rs.role_name IN (\n    '@everyone','Admin','Moderator','Mentor',\n    'MEE6','Divverse Bot','uche-bot'\n    -- add deity roles here if needed\n  )\n),\nmembers_with_team AS (\n  -- Members with at least one team role\n  SELECT DISTINCT mr.member_id\n  FROM member_roles mr\n  JOIN roles_status rs\n    ON rs.role_id::text = mr.role_id::text\n  WHERE rs.role_name LIKE 'team%'\n),\nfiltered_members AS (\n  -- Members that are neither excluded nor in any team\n  SELECT m.id AS member_id, m.username, m.global_name\n  FROM members m\n  WHERE m.id NOT IN (\n    SELECT member_id FROM excluded_members\n    UNION\n    SELECT member_id FROM members_with_team\n  )\n)\nSELECT \n  fm.member_id,\n  fm.username,\n  fm.global_name,\n  rs.role_name,\n  ra.status\nFROM filtered_members fm\nLEFT JOIN role_assignments ra\n  ON ra.member_id = fm.member_id\nLEFT JOIN roles_status rs\n  ON rs.role_id::text = ra.role_id::text;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        912,
+        1088
+      ],
+      "id": "de772ca5-2ba3-4104-bd02-55d3089f455b",
+      "name": "Find Members Wrongly Marked as Completed",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Update role_assignments to set status = 'pending'\n-- for members that are neither excluded nor in any team\nWITH member_roles AS (\n  SELECT m.id AS member_id, unnest(m.roles) AS role_id\n  FROM members m\n),\nexcluded_members AS (\n  SELECT DISTINCT mr.member_id\n  FROM member_roles mr\n  JOIN roles_status rs\n    ON rs.role_id::text = mr.role_id::text\n  WHERE rs.role_name IN (\n    '@everyone','Admin','Moderator','Mentor',\n    'MEE6','Divverse Bot','uche-bot'\n    -- add deity roles here if needed\n  )\n),\nmembers_with_team AS (\n  SELECT DISTINCT mr.member_id\n  FROM member_roles mr\n  JOIN roles_status rs\n    ON rs.role_id::text = mr.role_id::text\n  WHERE rs.role_name LIKE 'team%'\n),\nfiltered_members AS (\n  SELECT m.id AS member_id\n  FROM members m\n  WHERE m.id NOT IN (\n    SELECT member_id FROM excluded_members\n    UNION\n    SELECT member_id FROM members_with_team\n  )\n)\nUPDATE role_assignments ra\nSET status = 'pending'\nFROM filtered_members fm\nWHERE ra.member_id = fm.member_id;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1168,
+        1152
+      ],
+      "id": "132db125-ff57-45e7-9369-fe50ce8159fa",
+      "name": "Reset Status of Members with Incompletely Executed Role Assignments",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT *\nFROM members m\nWHERE username IN ('hilda03102', 'jansman.', 'sadgee_94');",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        928,
+        1328
+      ],
+      "id": "bf0755a1-377e-425a-84e3-43a3067b583f",
+      "name": "Verify Role Assignments1",
+      "credentials": {
+        "postgres": {
+          "id": "c9zJsump9IOO4Afw",
+          "name": "Uche Supabase"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Run At Every Hour": [
+      {
+        "json": {
+          "timestamp": "2025-09-05T18:00:20.006+01:00",
+          "Readable date": "September 5th 2025, 6:00:20 pm",
+          "Readable time": "6:00:20 pm",
+          "Day of week": "Friday",
+          "Year": "2025",
+          "Month": "September",
+          "Day of month": "05",
+          "Hour": "18",
+          "Minute": "00",
+          "Second": "20",
+          "Timezone": "Africa/Lagos (UTC+01:00)"
+        }
+      }
+    ],
+    "Run at 5th Minute of Every Hour": [
+      {
+        "json": {
+          "timestamp": "2025-09-09T17:05:35.005+01:00",
+          "Readable date": "September 9th 2025, 5:05:35 pm",
+          "Readable time": "5:05:35 pm",
+          "Day of week": "Tuesday",
+          "Year": "2025",
+          "Month": "September",
+          "Day of month": "09",
+          "Hour": "17",
+          "Minute": "05",
+          "Second": "35",
+          "Timezone": "Africa/Lagos (UTC+01:00)"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Construct Create Role Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct Create Role Payload": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Roles": {
+      "main": [
+        [
+          {
+            "node": "Construct Delete Role Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct Delete Role Payload": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Roles": {
+      "main": [
+        [
+          {
+            "node": "Wait 10 Seconds (Avoid Rate Limit)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Roles": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Delete Roles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Create Roles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Members": {
+      "main": [
+        [
+          {
+            "node": "Set Pagination Cursor (`after` parameter)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upsert Members",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Vars": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get All Roles1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Roles1": {
+      "main": [
+        [
+          {
+            "node": "Upsert Roles",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get All Members",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Members": {
+      "main": [
+        [
+          {
+            "node": "Create Eligible Member Pool",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Eligible Roles": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items3": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Insert Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Vars1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items4": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get All Members1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Members1": {
+      "main": [
+        [
+          {
+            "node": "Exclude Users with Higher Roles",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Cursor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exclude Users with Higher Roles": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items: Batches of 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Cursor": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait to Avoid Rate Limits": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items: Batches of 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign Role": {
+      "main": [
+        [
+          {
+            "node": "Wait to Avoid Rate Limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items: Batches of 5": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Assign Role",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Pagination Cursor (`after` parameter)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 10 Seconds (Avoid Rate Limit)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Eligible Member Pool": {
+      "main": [
+        [
+          {
+            "node": "Select Eligible Roles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Assignments": {
+      "main": [
+        [
+          {
+            "node": "Update Eligible Member Pool (Remove Assigned Members)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Role Assignments": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items: 5 per Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait to Avoid Rate Limits1": {
+      "main": [
+        [
+          {
+            "node": "Update Role Assignment Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Role Assignment Status": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items: 5 per Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Assignment Status": {
+      "main": [
+        []
+      ]
+    },
+    "Assign Team Role": {
+      "main": [
+        [
+          {
+            "node": "Wait to Avoid Rate Limits1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items: 5 per Batch": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Assign Team Role",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Role_Status Table": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run At Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Set Vars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run at 5th Minute of Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Reset Status of Members with Incompletely Executed Role Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Team Names (Batches)": {
+      "main": [
+        [
+          {
+            "node": "Create Team Channels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many channels": {
+      "main": [
+        [
+          {
+            "node": "Construct Role → Channel Permission Payloads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Roles2": {
+      "main": [
+        [
+          {
+            "node": "Construct Role → Channel Permission Payloads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct Role → Channel Permission Payloads": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Set Vars1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Eligible Member Pool (Remove Assigned Members)": {
+      "main": [
+        [
+          {
+            "node": "Update Role_Status Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset Status of Members with Incompletely Executed Role Assignments": {
+      "main": [
+        [
+          {
+            "node": "Get Role Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "tXQ8gQkD8HP1mkXQ"
+  },
+  "versionId": "43d1fb52-5b85-4f56-aa5e-05e91baaa769",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6fb639298be443e844be3206b20ad7955a5b5bab10f6930c436a39138d726f19"
+  },
+  "id": "5W21PilMwyTeoN0T",
+  "tags": []
+}
