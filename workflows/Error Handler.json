@@ -98,7 +98,7 @@
         "subject": "=Error in n8n Workflow: {{ $json.workflow.name }}",
         "message": "=Execution URL: {{ $json.execution.url }}  \n\nError Message: {{ $json.execution.error.message }}",
         "options": {
-          "ccList": "talk2king.aj@gmail.com"
+          "ccList": "blablabla@gmail.com"
         }
       },
       "type": "n8n-nodes-base.gmail",
